@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static navegacion %}<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
@@ -8,19 +8,20 @@
 </head>
 <body>
   {% block cuerpo %}
+  {% seccion_actual as seccion %}
   <header class="topbar">
     <a class="logo" href="{% url 'inicio' %}">🥩 CorteGestión</a>
-    <nav>
-      <a href="{% url 'inicio' %}">Inicio</a>
-      <a href="{% url 'gestion:catalogo' 'productos' %}">Productos</a>
-      <a href="{% url 'gestion:ventas' %}">Ventas</a>
-      <a href="{% url 'gestion:stock' %}">Stock</a>
+    <nav aria-label="Navegación principal">
+      <a href="{% url 'inicio' %}"{% if seccion == 'inicio' %} class="activo" aria-current="page"{% endif %}>Inicio</a>
+      <a href="{% url 'gestion:catalogo' 'productos' %}"{% if seccion == 'productos' %} class="activo" aria-current="page"{% endif %}>Productos</a>
+      <a href="{% url 'gestion:ventas' %}"{% if seccion == 'ventas' %} class="activo" aria-current="page"{% endif %}>Ventas</a>
+      <a href="{% url 'gestion:stock' %}"{% if seccion == 'stock' %} class="activo" aria-current="page"{% endif %}>Stock</a>
       {% if user.es_dueno %}
-      <a href="{% url 'gestion:catalogo' 'proveedores' %}">Proveedores</a>
-      <a href="{% url 'gestion:compras' %}">Compras</a>
-      <a href="{% url 'gestion:reportes' %}">Reportes</a>
+      <a href="{% url 'gestion:catalogo' 'proveedores' %}"{% if seccion == 'proveedores' %} class="activo" aria-current="page"{% endif %}>Proveedores</a>
+      <a href="{% url 'gestion:compras' %}"{% if seccion == 'compras' %} class="activo" aria-current="page"{% endif %}>Compras</a>
+      <a href="{% url 'gestion:reportes' %}"{% if seccion == 'reportes' %} class="activo" aria-current="page"{% endif %}>Reportes</a>
+      <a href="{% url 'usuario_lista' %}"{% if seccion == 'usuarios' %} class="activo" aria-current="page"{% endif %}>Usuarios</a>
       {% endif %}
-      {% if user.es_dueno %}<a href="{% url 'usuario_lista' %}">Usuarios</a>{% endif %}
     </nav>
     <div class="sesion">
       <span>{{ user.first_name|default:user.username }}</span>
