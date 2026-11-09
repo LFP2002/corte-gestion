@@ -1,0 +1,81 @@
+name: Pruebas Django y MariaDB
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+
+      - name: Generar entorno efimero de CI
+        shell: bash
+        run: |
+          umask 077
+          {
+            printf 'SECRET_KEY=%s\n' "$(openssl rand -hex 48)"
+            printf 'DEBUG=True\n'
+            printf 'ALLOWED_HOSTS=localhost,127.0.0.1\n'
+            printf 'DB_NAME=carniceria\n'
+            printf 'DB_USER=carniceria_app\n'
+            printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)"
+            printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 32)"
+          } > .env
+
+      - name: Crear volumen exclusivo del runner temporal
+        run: docker volume create carniceria_django_mariadb_data
+
+      - name: Validar configuracion Docker Compose
+        run: docker compose config --quiet
+
+      - name: Construir y levantar contenedores
+        run: docker compose up -d --build --wait
+
+      - name: Revisar configuracion Django y base de datos
+        run: docker compose exec -T web python manage.py check --database default
+
+      - name: Comprobar migraciones
+        run: docker compose exec -T web python manage.py makemigrations --check --dry-run
+
+      - name: Dar permisos solamente al esquema de pruebas
+        run: |
+          docker compose cp scripts/pruebas_mariadb.sh db:/tmp/pruebas_mariadb.sh
+          docker compose exec -T db sh /tmp/pruebas_mariadb.sh
+
+      - name: Ejecutar suite contra MariaDB real
+        run: docker compose exec -T web python manage.py test --verbosity 2
+
+      - name: Mostrar diagnostico si falla
+        if: failure()
+        run: |
+          docker compose ps || true
+          docker compose logs --tail=100 web db || true
+
+      - name: Limpiar recursos temporales del runner
+        if: always()
+        run: |
+          docker compose down --remove-orphans || true
+          docker volume rm carniceria_django_mariadb_data || true
+          rm -f .env
+
+  instalador-windows:
+    name: Validar instalador Windows
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+
+      - name: Validar instalacion y conservacion de datos con Docker simulado
+        shell: pwsh
+        run: ./scripts/tests/test_instalacion_nueva.ps1

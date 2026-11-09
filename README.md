@@ -9,9 +9,25 @@ MariaDB 11.4 LTS y phpMyAdmin oficial. No requiere XAMPP, Python ni MariaDB en W
 ## Inicio en Windows (PowerShell)
 
 Requisitos: Docker Desktop iniciado, motor de contenedores Linux / WSL2 y Docker Compose v2.
-Ejecutar desde la carpeta del proyecto (nombre deseado `corte-gestion`; la carpeta
-actual aún se llama `carniceria_django` hasta completar el cambio manual indicado
-en `docs/CAMBIO_IDENTIDAD.md`). El nombre Compose ya es **`corte-gestion`**:
+Ejecutar desde la carpeta raíz del proyecto, preferentemente llamada `corte-gestion`.
+El nombre Compose se fija como **`corte-gestion`**, con independencia del nombre de carpeta.
+
+### Instalación nueva desde GitHub (sin datos previos)
+
+```powershell
+git clone https://github.com/LFP2002/corte-gestion.git
+Set-Location corte-gestion
+powershell -ExecutionPolicy Bypass -File .\\scripts\\instalacion_nueva.ps1
+docker compose exec web python manage.py crear_dueno
+```
+
+El script comprueba Docker, solicita escribir `NUEVA`, prepara el entorno local,
+crea el volumen **solo si no existe** y levanta los servicios. Si encuentra un
+volumen existente, se detiene sin alterarlo. **Nunca usar esta inicialización
+para recuperar una instalación previa**: en ese caso verifique su volumen y
+restaure un respaldo si corresponde. No ejecute `docker compose down -v`.
+
+### Instalación existente con volumen conservado
 
 ```powershell
 # Solo crea .env si no existe, con secretos criptográficamente aleatorios.
@@ -197,7 +213,7 @@ de una antigua instalación XAMPP. Respaldarla por separado antes de cualquier m
 
 Modelo y decisiones: `docs/ARQUITECTURA.md`. Auditoría inicial: `docs/AUDITORIA.md`.
 Evidencia y limitaciones de verificación: `docs/VERIFICACION.md`.
-Cambio de identidad, respaldo verificado y pasos para renombrar la carpeta:
+Cambio de identidad y respaldo histórico verificado:
 `docs/CAMBIO_IDENTIDAD.md`.
 
 Es un entorno académico de **desarrollo local**, no un despliegue público. `runserver`,
@@ -206,3 +222,15 @@ un servidor de estáticos/WSGI, HTTPS, gestión de secretos, copias y controles 
 `/admin/` queda restringido a usuarios activos con `is_staff` **y rol dueño**; el dueño
 inicial no es staff/superusuario y administra todo el MVP desde sus pantallas normales.
 No conceder esos privilegios para uso cotidiano.
+
+
+## Integración continua en GitHub
+
+El flujo `.github/workflows/ci.yml` se ejecuta en pushes a `main`, pull requests
+hacia `main` y manualmente desde Actions. En un runner Linux desechable crea un
+`.env` temporal con secretos aleatorios, un volumen de MariaDB exclusivo de ese
+runner, construye los tres servicios, verifica Django/migraciones y ejecuta la
+suite completa contra MariaDB. El flujo **no utiliza** los volúmenes ni las
+credenciales del computador del desarrollador. Comprobar sus resultados en
+**GitHub → Actions** antes de aprobar una pull request. Que CI apruebe no sustituye
+la revisión visual ni la validación de RNF2 con usuarios.
