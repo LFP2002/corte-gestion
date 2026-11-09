@@ -74,8 +74,8 @@ La primera descarga/compilación puede tardar varios minutos. No se ejecutan
 | Operación | Dueño | Empleado |
 |---|---|---|
 | Consultar productos, precios y stock | Sí | Sí |
-| Registrar venta y consultar sus ventas | Sí | Sí |
-| Consultar ventas de otros usuarios | Sí | No (404) |
+| Registrar ventas | Sí | Sí |
+| Consultar historial y detalle de todas las ventas (solo lectura) | Sí | Sí |
 | CRUD productos, proveedores y usuarios | Sí | No (403) |
 | Registrar / consultar compras | Sí | No (403) |
 | Reportes y movimientos de inventario | Sí | No (403 / ocultos) |
@@ -240,7 +240,9 @@ la revisión visual ni la validación de RNF2 con usuarios.
 
 - Inicio con indicadores de productos activos, productos agotados, cantidad de ventas
   e importe vendido hoy. El dueño ve las ventas del negocio; cada empleado ve
-  **solo sus propias ventas**. Las métricas son consultas de lectura y no cambian el inventario.
+  **solo sus propias ventas**, aunque el historial de Ventas incluye operaciones
+  de todos los usuarios para facilitar la atención y trazabilidad.
+  Las métricas son consultas de lectura y no cambian el inventario.
 - Precios e importes se muestran con el filtro de plantillas `clp`
   (`gestion/templatetags/moneda.py`): `$60.000` si no hay centavos;
   `$1.234,50` si el valor registrado tiene fracción. El Decimal almacenado
