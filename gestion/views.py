@@ -119,9 +119,9 @@ def stock(request):
 @login_required
 def ventas(request):
     validar_usuario(request.user)
+    # El historial es de consulta para cualquier usuario activo autorizado;
+    # conservar el vendedor visible permite trazabilidad de cada operación.
     objetos = Venta.objects.select_related('usuario')
-    if not request.user.es_dueno:
-        objetos = objetos.filter(usuario=request.user)
     pagina = Paginator(objetos, 30).get_page(request.GET.get('page'))
     return render(request, 'gestion/operaciones.html', {'objetos': pagina, 'tipo': 'venta'})
 
@@ -147,9 +147,9 @@ def venta_crear(request):
 @login_required
 def venta_detalle(request, pk):
     validar_usuario(request.user)
+    # Los detalles también son visibles para empleados, independientemente
+    # de quién registró la venta. La vista no permite modificar operaciones.
     objetos = Venta.objects.select_related('usuario').prefetch_related('detalles__producto')
-    if not request.user.es_dueno:
-        objetos = objetos.filter(usuario=request.user)
     venta = get_object_or_404(objetos, pk=pk)
     return render(request, 'gestion/operacion_detalle.html', {'object': venta, 'tipo': 'venta'})
 

@@ -37,7 +37,7 @@ class ComprasTests(BaseNegocio):
             'lineas-0-producto': self.producto.pk, 'lineas-0-cantidad': '12', 'lineas-0-precio_unitario': '5000',
         })
         self.assertEqual(respuesta.status_code, 302)
-        self.assertContains(self.client.get(respuesta.url), '60000')
+        self.assertContains(self.client.get(respuesta.url), '$60.000')
 
     def test_empleado_no_compra(self):
         self.client.force_login(self.empleado)

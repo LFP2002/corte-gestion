@@ -57,14 +57,47 @@ class VentasTests(BaseVentas):
         })
         self.assertEqual(respuesta.status_code, 302)
         for _ in range(2):
-            self.assertContains(self.client.get(respuesta.url), '20000')
+            self.assertContains(self.client.get(respuesta.url), '$20.000')
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, Decimal('9.5'))
 
-    def test_empleado_no_ve_venta_ajena(self):
-        venta = registrar_venta(usuario=self.dueno, fecha=date(2026, 11, 8), lineas=[self.linea('1')])
+    def test_empleado_consulta_historial_completo_y_detalle_ajeno(self):
+        venta_dueno = registrar_venta(
+            usuario=self.dueno, fecha=date(2026, 11, 8),
+            lineas=[self.linea('1', '8000')],
+        )
+        venta_propia = self.venta('2')
         self.client.force_login(self.empleado)
-        self.assertEqual(self.client.get(reverse('gestion:venta_detalle', args=[venta.pk])).status_code, 404)
+
+        respuesta = self.client.get(reverse('gestion:ventas'))
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(
+            {venta.pk for venta in respuesta.context['objetos']},
+            {venta_dueno.pk, venta_propia.pk},
+        )
+        self.assertContains(respuesta, reverse('gestion:venta_detalle', args=[venta_dueno.pk]))
+        self.assertContains(respuesta, reverse('gestion:venta_detalle', args=[venta_propia.pk]))
+        self.assertContains(respuesta, 'dueno')
+        self.assertContains(respuesta, 'empleado')
+
+        detalle = self.client.get(reverse('gestion:venta_detalle', args=[venta_dueno.pk]))
+        self.assertEqual(detalle.status_code, 200)
+        self.assertContains(detalle, '$8.000')
+        self.assertContains(detalle, 'dueno')
+        self.assertContains(self.client.get(reverse('gestion:venta_detalle', args=[venta_propia.pk])), '$16.000')
+        self.assertEqual(Venta.objects.count(), 2)
+
+    def test_acceso_de_empleado_sigue_restringido_a_consulta_comercial(self):
+        venta = registrar_venta(
+            usuario=self.dueno, fecha=date(2026, 11, 8),
+            lineas=[self.linea('1', '8000')],
+        )
+        self.client.force_login(self.empleado)
+        self.assertEqual(self.client.get(reverse('gestion:venta_detalle', args=[venta.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse('gestion:compras')).status_code, 403)
+        self.assertEqual(self.client.get(reverse('gestion:reportes')).status_code, 403)
+        self.assertEqual(self.client.get(reverse('gestion:compra_crear')).status_code, 403)
+        self.assertEqual(Venta.objects.count(), 1)
 
     def test_producto_inactivo_y_duplicado(self):
         with self.assertRaises(ValidationError):

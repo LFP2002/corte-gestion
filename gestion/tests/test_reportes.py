@@ -44,7 +44,7 @@ class ReportesTests(BaseNegocio):
     def test_http_reportes_y_fecha_invalida(self):
         self.client.force_login(self.dueno)
         respuesta = self.client.get(reverse('gestion:reportes'), {'periodo': 'semana', 'fecha': '2026-11-08'})
-        self.assertContains(respuesta, '60000')
+        self.assertContains(respuesta, '$60.000')
         self.assertContains(respuesta, 'Posta rosada')
         self.assertEqual(list(respuesta.context['productos'])[0]['cantidad_vendida'], Decimal('2.5'))
         invalida = self.client.get(reverse('gestion:reportes'), {'periodo': 'mes', 'fecha': 'incorrecta'})

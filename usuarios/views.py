@@ -2,7 +2,13 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
 from django.core.exceptions import PermissionDenied
+from decimal import Decimal
+
 from django.db import transaction
+from django.db.models import Count, Q, Sum
+from django.utils import timezone
+
+from gestion.models import Producto, Venta
 from django.db.models.deletion import ProtectedError
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
@@ -23,6 +29,28 @@ class SoloDueno(LoginRequiredMixin, UserPassesTestMixin):
 
 class Inicio(LoginRequiredMixin, TemplateView):
     template_name = 'usuarios/inicio.html'
+
+    def get_context_data(self, **kwargs):
+        contexto = super().get_context_data(**kwargs)
+        productos = Producto.objects.filter(activo=True).aggregate(
+            cantidad=Count('pk'),
+            agotados=Count('pk', filter=Q(stock=0)),
+        )
+        ventas = Venta.objects.filter(fecha=timezone.localdate())
+        if not self.request.user.es_dueno:
+            # Un empleado únicamente puede consultar los indicadores de sus ventas.
+            ventas = ventas.filter(usuario_id=self.request.user.pk)
+        resumen_ventas = ventas.aggregate(
+            cantidad=Count('pk'),
+            monto=Sum('total', default=Decimal('0')),
+        )
+        contexto.update(
+            productos_activos=productos['cantidad'],
+            productos_agotados=productos['agotados'],
+            ventas_hoy=resumen_ventas['cantidad'],
+            monto_ventas_hoy=resumen_ventas['monto'],
+        )
+        return contexto
 
 
 class UsuarioLista(SoloDueno, ListView):
