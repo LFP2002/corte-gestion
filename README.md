@@ -234,3 +234,20 @@ suite completa contra MariaDB. El flujo **no utiliza** los volúmenes ni las
 credenciales del computador del desarrollador. Comprobar sus resultados en
 **GitHub → Actions** antes de aprobar una pull request. Que CI apruebe no sustituye
 la revisión visual ni la validación de RNF2 con usuarios.
+
+
+## Mejoras de interfaz (rama de evaluación)
+
+- Inicio con indicadores de productos activos, productos agotados, cantidad de ventas
+  e importe vendido hoy. El dueño ve las ventas del negocio; cada empleado ve
+  **solo sus propias ventas**. Las métricas son consultas de lectura y no cambian el inventario.
+- Precios e importes se muestran con el filtro de plantillas `clp`
+  (`gestion/templatetags/moneda.py`): `$60.000` si no hay centavos;
+  `$1.234,50` si el valor registrado tiene fracción. El Decimal almacenado
+  conserva toda su precisión y los formularios de registro no cambian.
+- Catálogo e inventario distinguen «Agotado», «Activo/Disponible» e «Inactivo»;
+  formularios de búsqueda compactos, tablas mejor rotuladas y paginación visible
+  solo cuando existe más de una página.
+- Antes de aprobar el cambio, comprobar manualmente panel, catálogos, stock,
+  historial y reportes en escritorio y móvil. Los formularios de compra y venta
+  siguen pendientes de revisión visual específica; sus servicios permanecen intactos.
