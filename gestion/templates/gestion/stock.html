@@ -1,5 +1,58 @@
 {% extends 'base.html' %}
-{% block contenido %}<h1>Inventario</h1><form method="get" class="fila"><label>Buscar producto<input name="q" value="{{ request.GET.q }}"></label><button class="btn">Buscar</button></form>
-<div class="card"><table><tr><th>Producto</th><th>Existencias</th></tr>{% for p in productos %}<tr><td>{{ p.nombre }}</td><td>{{ p.stock }} {{ p.unidad }}</td></tr>{% empty %}<tr><td>Sin productos.</td></tr>{% endfor %}</table></div>
+{% block titulo %}Inventario{% endblock %}
+{% block contenido %}
+<h1>Inventario</h1>
+<form method="get" class="search-form" role="search">
+  <div class="campo-busqueda">
+    <label for="buscar-stock">Buscar producto</label>
+    <input id="buscar-stock" name="q" type="search" value="{{ request.GET.q }}">
+  </div>
+  <button class="btn" type="submit">Buscar</button>
+</form>
+<div class="card tabla-scroll">
+  <table>
+    <thead><tr><th scope="col">Producto</th><th scope="col" class="num">Existencias</th><th scope="col">Estado</th></tr></thead>
+    <tbody>
+      {% for p in productos %}
+      <tr>
+        <td>{{ p.nombre }}</td>
+        <td class="num">{{ p.stock|floatformat:3 }} {{ p.unidad }}</td>
+        <td>
+          {% if not p.activo %}
+            <span class="estado estado-inactivo">Inactivo</span>
+          {% elif p.stock == 0 %}
+            <span class="estado estado-agotado">Agotado</span>
+          {% else %}
+            <span class="estado estado-disponible">Disponible</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No hay productos para mostrar.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% include 'gestion/paginacion.html' with pagina=productos %}
-{% if user.es_dueno %}<h2>Últimos 50 movimientos</h2><div class="card tabla-scroll"><table><tr><th>Fecha</th><th>Producto</th><th>Entrada / salida</th><th>Saldo posterior</th><th>Usuario</th></tr>{% for m in movimientos %}<tr><td>{{ m.creado_en|date:'d-m-Y H:i' }}</td><td>{{ m.producto }}</td><td>{{ m.cantidad }}</td><td>{{ m.saldo }}</td><td>{{ m.usuario }}</td></tr>{% empty %}<tr><td>Sin movimientos.</td></tr>{% endfor %}</table></div>{% endif %}{% endblock %}
+{% if user.es_dueno %}
+<h2>Últimos 50 movimientos</h2>
+<div class="card tabla-scroll">
+  <table>
+    <thead><tr><th scope="col">Fecha</th><th scope="col">Producto</th><th scope="col" class="num">Entrada / salida</th><th scope="col" class="num">Saldo posterior</th><th scope="col">Usuario</th></tr></thead>
+    <tbody>
+      {% for m in movimientos %}
+      <tr>
+        <td>{{ m.creado_en|date:'d-m-Y H:i' }}</td>
+        <td>{{ m.producto }}</td>
+        <td class="num">{{ m.cantidad|floatformat:3 }}</td>
+        <td class="num">{{ m.saldo|floatformat:3 }}</td>
+        <td>{{ m.usuario }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">Sin movimientos.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
