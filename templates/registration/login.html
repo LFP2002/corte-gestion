@@ -1,0 +1,15 @@
+{% extends "registration/acceso_base.html" %}
+{% block titulo %}Ingresar{% endblock %}
+{% block formulario %}
+<h2>Ingresar a CorteGestión</h2>
+{% if form.errors %}<div class="flash error">Usuario o contraseña incorrectos.</div>{% endif %}
+<form method="post">{% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
+  <div class="campo"><label for="id_username">Usuario</label>
+    <input id="id_username" name="username" required autofocus autocomplete="username"></div>
+  <div class="campo"><label for="id_password">Contraseña</label>
+    <input id="id_password" name="password" type="password" required autocomplete="current-password"></div>
+  <button class="btn" type="submit">Ingresar</button>
+</form>
+<p class="pie">Solicita tu cuenta al dueño de la carnicería.</p>
+{% endblock %}

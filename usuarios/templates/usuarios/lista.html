@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<div class="cabecera">
+  <div><h1>Usuarios</h1><p>Cuentas guardadas en MariaDB (contraseñas protegidas con hash). Las cuentas con historial se desactivan al editar.</p></div>
+  <a class="btn" href="{% url 'usuario_crear' %}">+ Nuevo usuario</a>
+</div>
+<div class="card tabla-scroll"><table>
+  <tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Creado</th><th></th></tr>
+  {% for u in usuarios %}
+  <tr><td>{{ u.id }}</td><td>{{ u.first_name }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td>
+    <td><span class="badge {{ u.rol }}">{{ u.get_rol_display }}</span></td>
+    <td>{{ u.date_joined|date:"d-m-Y H:i" }}</td>
+    <td><form class="inline" method="post" action="{% url 'usuario_eliminar' u.pk %}"
+              onsubmit="return confirm('¿Eliminar a {{ u.username }}?')">{% csrf_token %}
+      <a class="btn sec mini" href="{% url 'usuario_editar' u.pk %}">Editar</a>
+      <button class="btn sec mini">Eliminar</button></form></td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

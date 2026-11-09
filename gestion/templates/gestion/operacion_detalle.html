@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block contenido %}<h1>{{ tipo|capfirst }} #{{ object.pk }}</h1><div class="card"><p>Fecha: {{ object.fecha|date:'d-m-Y' }} · Registrada por: {{ object.usuario }}</p>{% if tipo == 'compra' %}<p>Proveedor: {{ object.proveedor }} · Documento: {{ object.referencia|default:'Sin referencia' }}</p>{% endif %}
+<div class="tabla-scroll"><table><tr><th>Producto</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr>{% for d in object.detalles.all %}<tr><td>{{ d.producto }}</td><td>{{ d.cantidad }}</td><td>${{ d.precio_unitario }}</td><td>${{ d.subtotal }}</td></tr>{% endfor %}</table></div><p class="total">Total: ${{ object.total }}</p><p>Operación confirmada. Historial no editable.</p></div>{% endblock %}

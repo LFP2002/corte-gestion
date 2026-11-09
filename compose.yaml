@@ -1,0 +1,54 @@
+name: corte-gestion
+
+services:
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:?Defina DB_NAME en .env}
+      MARIADB_USER: ${DB_USER:?Defina DB_USER en .env}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD en .env}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Defina DB_ROOT_PASSWORD en .env}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+  web:
+    build: .
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?Defina SECRET_KEY en .env}
+      DEBUG: ${DEBUG:-True}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: "3306"
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/login/', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+  phpmyadmin:
+    image: phpmyadmin:5.2-apache
+    environment:
+      PMA_HOST: db
+      PMA_PORT: "3306"
+    ports:
+      - "127.0.0.1:8081:80"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  mariadb_data:
+    external: true
+    name: carniceria_django_mariadb_data

@@ -1,0 +1,15 @@
+{
+    "python.terminal.useEnvFile": true,
+    "files.exclude": {
+        "**/.venv": true,
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/.pytest_cache": true,
+        "**/.mypy_cache": true,
+        "**/.ruff_cache": true,
+        "**/.coverage": true,
+        "**/htmlcov": true,
+        "**/test-results": true,
+        "**/*.sqlite3": true
+    }
+}

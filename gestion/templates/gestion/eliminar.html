@@ -1,0 +1,2 @@
+{% extends 'base.html' %}
+{% block contenido %}<div class="card"><h1>Eliminar {{ object }}</h1><p>Los registros con historial están protegidos.</p><form method="post">{% csrf_token %}<button class="btn">Confirmar eliminación</button> <a href="{% url 'gestion:catalogo' tipo %}">Cancelar</a></form></div>{% endblock %}

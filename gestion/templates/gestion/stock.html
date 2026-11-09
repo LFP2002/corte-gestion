@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block contenido %}<h1>Inventario</h1><form method="get" class="fila"><label>Buscar producto<input name="q" value="{{ request.GET.q }}"></label><button class="btn">Buscar</button></form>
+<div class="card"><table><tr><th>Producto</th><th>Existencias</th></tr>{% for p in productos %}<tr><td>{{ p.nombre }}</td><td>{{ p.stock }} {{ p.unidad }}</td></tr>{% empty %}<tr><td>Sin productos.</td></tr>{% endfor %}</table></div>
+{% include 'gestion/paginacion.html' with pagina=productos %}
+{% if user.es_dueno %}<h2>Últimos 50 movimientos</h2><div class="card tabla-scroll"><table><tr><th>Fecha</th><th>Producto</th><th>Entrada / salida</th><th>Saldo posterior</th><th>Usuario</th></tr>{% for m in movimientos %}<tr><td>{{ m.creado_en|date:'d-m-Y H:i' }}</td><td>{{ m.producto }}</td><td>{{ m.cantidad }}</td><td>{{ m.saldo }}</td><td>{{ m.usuario }}</td></tr>{% empty %}<tr><td>Sin movimientos.</td></tr>{% endfor %}</table></div>{% endif %}{% endblock %}

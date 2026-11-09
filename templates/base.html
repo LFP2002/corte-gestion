@@ -1,0 +1,38 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CorteGestión · {% block titulo %}Inicio{% endblock %} · Sistema de Gestión para Carnicerías</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  {% block cuerpo %}
+  <header class="topbar">
+    <a class="logo" href="{% url 'inicio' %}">🥩 CorteGestión</a>
+    <nav>
+      <a href="{% url 'inicio' %}">Inicio</a>
+      <a href="{% url 'gestion:catalogo' 'productos' %}">Productos</a>
+      <a href="{% url 'gestion:ventas' %}">Ventas</a>
+      <a href="{% url 'gestion:stock' %}">Stock</a>
+      {% if user.es_dueno %}
+      <a href="{% url 'gestion:catalogo' 'proveedores' %}">Proveedores</a>
+      <a href="{% url 'gestion:compras' %}">Compras</a>
+      <a href="{% url 'gestion:reportes' %}">Reportes</a>
+      {% endif %}
+      {% if user.es_dueno %}<a href="{% url 'usuario_lista' %}">Usuarios</a>{% endif %}
+    </nav>
+    <div class="sesion">
+      <span>{{ user.first_name|default:user.username }}</span>
+      <span class="rol">{{ user.get_rol_display }}</span>
+      <form class="inline" method="post" action="{% url 'logout' %}">{% csrf_token %}
+        <button class="btn sec mini" style="color:#fff;border-color:#fff">Salir</button></form>
+    </div>
+  </header>
+  <main>
+    {% for m in messages %}<div class="flash {{ m.tags }}">{{ m }}</div>{% endfor %}
+    {% block contenido %}{% endblock %}
+  </main>
+  {% endblock %}
+</body>
+</html>

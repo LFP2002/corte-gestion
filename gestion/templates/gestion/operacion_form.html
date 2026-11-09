@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h1>Registrar {{ tipo }}</h1><p>Una confirmación guarda la operación y actualiza las existencias. Cantidades en kg admiten coma decimal.</p>
+<form method="post" class="card" id="operacion">{% csrf_token %}{{ form.as_p }}
+{{ lineas.management_form }}{{ lineas.non_form_errors }}
+<div id="lineas">{% for linea in lineas %}<div class="fila detalle">{{ linea.as_p }}</div>{% endfor %}</div>
+<template id="linea-vacia"><div class="fila detalle">{{ lineas.empty_form.as_p }}</div></template>
+<button type="button" class="btn sec" id="agregar">+ Agregar producto</button>
+<p>Marque «Eliminar» para omitir una línea. Los totales se calculan al confirmar.</p>
+<button class="btn" type="submit">Confirmar {{ tipo }}</button></form>
+{% if tipo == 'venta' %}<select id="precios" hidden aria-hidden="true">{% for p in lineas.productos %}<option value="{{ p.pk }}" data-precio="{{ p.precio_venta|stringformat:'.2f' }}">{{ p.nombre }}</option>{% endfor %}</select>{% endif %}
+{% load static %}<script src="{% static 'gestion/js/operacion.js' %}" defer></script>
+{% endblock %}

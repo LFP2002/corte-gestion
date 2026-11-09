@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+<div class="acceso">
+  <section class="lado">
+    <h1>🥩 CorteGestión</h1>
+    <p>Sistema de Gestión para Carnicerías</p>
+    <p>Compras, ventas y stock en un solo lugar, sin depender del cuaderno.</p>
+    {% block lado %}{% endblock %}
+  </section>
+  <section class="formulario">
+    <div class="caja">
+      {% for m in messages %}<div class="flash {{ m.tags }}">{{ m }}</div>{% endfor %}
+      {% block formulario %}{% endblock %}
+    </div>
+  </section>
+</div>
+{% endblock %}

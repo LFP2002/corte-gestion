@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="cabecera"><div><h1>{{ titulo }}</h1></div></div>
+<form method="post" class="card" novalidate>{% csrf_token %}
+  {% for f in form %}
+  <div class="campo"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{{ f.errors }}
+    {% if f.help_text %}<small>{{ f.help_text|safe }}</small>{% endif %}</div>
+  {% endfor %}
+  <button class="btn" type="submit">Guardar</button>
+  <a class="btn sec" href="{% url 'usuario_lista' %}">Cancelar</a>
+</form>
+{% endblock %}

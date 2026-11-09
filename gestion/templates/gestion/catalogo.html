@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<div class="cabecera"><h1>{{ titulo }}</h1>{% if user.es_dueno %}<a class="btn" href="{% url 'gestion:catalogo_crear' tipo %}">+ Nuevo registro</a>{% endif %}</div>
+<form method="get" class="fila"><label>Buscar por nombre<input name="q" value="{{ request.GET.q }}"></label><button class="btn">Buscar</button></form>
+<div class="card tabla-scroll"><table><thead><tr><th>Nombre</th>{% if tipo == 'productos' %}<th>Unidad</th><th>Precio de venta</th><th>Stock</th>{% else %}<th>RUT</th><th>Teléfono</th><th>Correo</th>{% endif %}<th>Activo</th><th>Acciones</th></tr></thead>
+<tbody>{% for o in objetos %}<tr><td>{{ o.nombre }}</td>{% if tipo == 'productos' %}<td>{{ o.unidad }}</td><td>${{ o.precio_venta }}</td><td>{{ o.stock }}</td>{% else %}<td>{{ o.rut }}</td><td>{{ o.telefono }}</td><td>{{ o.email }}</td>{% endif %}<td>{{ o.activo|yesno:'Sí,No' }}</td><td>{% if user.es_dueno %}<a href="{% url 'gestion:catalogo_editar' tipo o.pk %}">Editar</a> · <a href="{% url 'gestion:catalogo_eliminar' tipo o.pk %}">Eliminar</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="7">Sin registros.</td></tr>{% endfor %}</tbody></table></div>
+{% include 'gestion/paginacion.html' with pagina=objetos %}
+{% endblock %}
