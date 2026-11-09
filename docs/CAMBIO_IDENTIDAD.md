@@ -10,7 +10,7 @@
 - Se conservan `config`, `usuarios`, `gestion`, modelos, migraciones, rutas,
   permisos, reglas de negocio, pruebas, CSS y JavaScript. No hay nuevas dependencias.
 - La base sigue llamándose `carniceria`; usuario y credenciales de MariaDB no cambian.
-  `.env` no fue editado ni incluido en la imagen. La carpeta raíz no fue renombrada.
+  `.env` no fue editado ni incluido en la imagen. La carpeta raíz todavía no se había renombrado cuando se documentó este cambio.
 
 ## Volumen y datos inspeccionados
 
@@ -127,7 +127,7 @@ servicios, formularios, vistas, rutas, permisos, comandos, pruebas, CSS o JavaSc
 No se generaron migraciones ni se modificó el esquema. No se ejecutaron commits,
 push ni acciones de GitHub; esta carpeta no es un repositorio Git.
 
-## Renombrar la carpeta raíz en Windows — pendiente manual
+## Procedimiento histórico para renombrar la carpeta raíz en Windows
 
 No ejecutar mientras VS Code, OpenCode u otros procesos estén trabajando dentro
 de la carpeta. Guardar el trabajo, terminar esta sesión y cerrar los editores.
@@ -159,8 +159,9 @@ del nombre de la carpeta.
 
 ## Límites pendientes
 
-No hay fallos conocidos del cambio de identidad. Falta exclusivamente el renombrado
-manual de la carpeta y, para uso operativo, crear el primer dueño. No se realizó
+No hay fallos conocidos del cambio de identidad. En el momento del cambio aún faltaba renombrar manualmente la carpeta y,
+para uso operativo, crear el primer dueño. Este documento conserva ese estado
+histórico; revise la ubicación real del clon actual. No se realizó
 inspección visual interactiva en navegador ni validación RNF2 con personal del negocio.
 No borrar volúmenes desde Docker Desktop, no usar `docker volume rm` y no ejecutar
 `docker compose down -v` como tarea de mantenimiento.
