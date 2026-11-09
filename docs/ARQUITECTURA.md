@@ -61,6 +61,19 @@ accidentalmente productos, proveedores, usuarios, cabeceras o detalles referenci
 Un administrador de BD puede eludir reglas de aplicación: phpMyAdmin es de consulta
 para la demostración, no un editor de stock.
 
+## Acceso de empleados al historial comercial
+
+Los usuarios activos con rol **empleado** pueden registrar ventas y consultar
+el historial completo de ventas con su detalle, fecha, productos, importes y
+usuario que registró cada operación. Es acceso de **solo lectura**: no existen
+rutas de edición o eliminación de ventas confirmadas. Compras, proveedores,
+reportes gerenciales y administración de usuarios continúan restringidos al dueño.
+
+Los indicadores del panel del empleado muestran **solo sus ventas de hoy**;
+los del dueño muestran todas las ventas realizadas hoy. Este alcance es distinto
+del historial de ventas compartido y permite trazabilidad sin confundir
+estadísticas personales con totales del negocio.
+
 ## Períodos
 
 Reportes basados en la **fecha comercial**, no la fecha técnica de inserción.
