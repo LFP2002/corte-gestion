@@ -1,15 +1,49 @@
 {% extends "base.html" %}
+{% load moneda %}
 {% block titulo %}Inicio{% endblock %}
 {% block contenido %}
-<div class="cabecera"><div><h1>CorteGestión</h1><p>Sistema de Gestión para Carnicerías</p><p>Hola, {{ user.first_name|default:user.username }} · Sesión iniciada como {{ user.get_rol_display }}</p></div></div>
-<div class="grid">
-<a class="card" href="{% url 'gestion:venta_crear' %}"><h2>Registrar venta</h2><p>Descontar productos del inventario.</p></a>
-<a class="card" href="{% url 'gestion:catalogo' 'productos' %}"><h2>Productos</h2><p>Catálogo y precios.</p></a>
-<a class="card" href="{% url 'gestion:stock' %}"><h2>Inventario</h2><p>Consultar existencias actuales.</p></a>
-{% if user.es_dueno %}
-<a class="card" href="{% url 'gestion:compra_crear' %}"><h2>Registrar compra</h2><p>Ingresar productos al inventario.</p></a>
-<a class="card" href="{% url 'gestion:catalogo' 'proveedores' %}"><h2>Proveedores</h2><p>Administrar contactos.</p></a>
-<a class="card" href="{% url 'gestion:reportes' %}"><h2>Reportes</h2><p>Compras por proveedor y productos más vendidos.</p></a>
-<a class="card" href="{% url 'usuario_lista' %}"><h2>Usuarios</h2><p>Administrar cuentas y roles.</p></a>
-{% endif %}</div>
+<div class="cabecera">
+  <div>
+    <h1>CorteGestión</h1>
+    <p>Sistema de Gestión para Carnicerías</p>
+    <p>Hola, {{ user.first_name|default:user.username }} · Sesión iniciada como {{ user.get_rol_display }}</p>
+  </div>
+</div>
+
+<section aria-labelledby="resumen-titulo" class="resumen-inicio">
+  <div class="cabecera"><h2 id="resumen-titulo">Resumen de hoy</h2></div>
+  <div class="dashboard-stats">
+    <div class="card kpi">
+      <p class="etiqueta">Productos activos</p>
+      <p class="valor">{{ productos_activos }}</p>
+    </div>
+    <div class="card kpi">
+      <p class="etiqueta">Productos agotados</p>
+      <p class="valor{% if productos_agotados %} alerta{% endif %}">{{ productos_agotados }}</p>
+    </div>
+    <div class="card kpi">
+      <p class="etiqueta">{% if user.es_dueno %}Ventas realizadas hoy{% else %}Mis ventas de hoy{% endif %}</p>
+      <p class="valor">{{ ventas_hoy }}</p>
+    </div>
+    <div class="card kpi">
+      <p class="etiqueta">{% if user.es_dueno %}Importe vendido hoy{% else %}Importe de mis ventas hoy{% endif %}</p>
+      <p class="valor">{{ monto_ventas_hoy|clp }}</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="accesos-titulo">
+  <h2 id="accesos-titulo" class="section-heading">Accesos rápidos</h2>
+  <div class="grid">
+    <a class="card" href="{% url 'gestion:venta_crear' %}"><h3>Registrar venta</h3><p>Descontar productos del inventario.</p></a>
+    <a class="card" href="{% url 'gestion:catalogo' 'productos' %}"><h3>Productos</h3><p>Catálogo y precios.</p></a>
+    <a class="card" href="{% url 'gestion:stock' %}"><h3>Inventario</h3><p>Consultar existencias actuales.</p></a>
+    {% if user.es_dueno %}
+    <a class="card" href="{% url 'gestion:compra_crear' %}"><h3>Registrar compra</h3><p>Ingresar productos al inventario.</p></a>
+    <a class="card" href="{% url 'gestion:catalogo' 'proveedores' %}"><h3>Proveedores</h3><p>Administrar contactos.</p></a>
+    <a class="card" href="{% url 'gestion:reportes' %}"><h3>Reportes</h3><p>Compras por proveedor y productos más vendidos.</p></a>
+    <a class="card" href="{% url 'usuario_lista' %}"><h3>Usuarios</h3><p>Administrar cuentas y roles.</p></a>
+    {% endif %}
+  </div>
+</section>
 {% endblock %}
