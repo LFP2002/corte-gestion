@@ -57,7 +57,7 @@ class VentasTests(BaseVentas):
         })
         self.assertEqual(respuesta.status_code, 302)
         for _ in range(2):
-            self.assertContains(self.client.get(respuesta.url), '20000')
+            self.assertContains(self.client.get(respuesta.url), '$20.000')
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, Decimal('9.5'))
 
