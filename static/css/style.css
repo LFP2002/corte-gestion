@@ -185,3 +185,63 @@ input[type="checkbox"] { width: auto; }
   .grid > a.card { min-height: 110px; }
   th, td { padding: .55rem .45rem; }
 }
+
+
+/* Navegación responsive: identidad y sesión arriba; pestañas en una sola fila.
+   Desplazamiento horizontal disponible con dedo, ratón o teclado. */
+@media (max-width: 760px) {
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "marca sesion" "navegacion navegacion";
+    align-items: center;
+    gap: .55rem .75rem;
+    padding: .65rem 1rem .45rem;
+  }
+  .topbar .logo {
+    grid-area: marca;
+    font-size: 1.15rem;
+    line-height: 1.25;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .topbar .sesion {
+    grid-area: sesion;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-self: end;
+    gap: .45rem;
+    white-space: nowrap;
+    font-size: .83rem;
+  }
+  .topbar .sesion .rol { font-size: .68rem; }
+  .topbar .sesion .btn.mini { padding: .28rem .55rem; }
+  .topbar nav {
+    grid-area: navegacion;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    flex: initial;
+    gap: .25rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: .1rem 0 .4rem;
+    scrollbar-width: thin;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .topbar nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: .9rem;
+  }
+}
+@media (max-width: 350px) {
+  .topbar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "marca" "sesion" "navegacion";
+  }
+  .topbar .sesion { justify-self: start; }
+}
