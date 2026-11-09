@@ -1,5 +1,45 @@
 {% extends 'base.html' %}
-{% block contenido %}<h1>Reportes</h1><form method="get" class="card fila">{{ form.as_p }}<button class="btn">Consultar período</button></form>
-{% if inicio %}<p>Desde {{ inicio|date:'d-m-Y' }} hasta {{ ultimo_dia|date:'d-m-Y' }}, ambas fechas incluidas.</p>
-<h2>Compras por proveedor</h2><div class="card tabla-scroll"><table><tr><th>Proveedor</th><th>Total comprado</th></tr>{% for p in proveedores %}<tr><td>{{ p.nombre }}</td><td>${{ p.total_comprado }}</td></tr>{% empty %}<tr><td>Sin proveedores.</td></tr>{% endfor %}</table></div>
-<h2>Productos más vendidos</h2><p>Ordenados por cantidad. Compare cantidades dentro de la misma unidad de medida.</p><div class="card tabla-scroll"><table><tr><th>Producto</th><th>Cantidad vendida</th><th>Unidad</th><th>Importe</th></tr>{% for p in productos %}<tr><td>{{ p.producto__nombre }}</td><td>{{ p.cantidad_vendida }}</td><td>{{ p.producto__unidad }}</td><td>${{ p.total_vendido }}</td></tr>{% empty %}<tr><td colspan="4">Sin ventas en este período.</td></tr>{% endfor %}</table></div>{% endif %}{% endblock %}
+{% load moneda %}
+{% block titulo %}Reportes{% endblock %}
+{% block contenido %}
+<h1>Reportes</h1>
+<form method="get" class="card fila">
+  {{ form.as_p }}
+  <button class="btn" type="submit">Consultar período</button>
+</form>
+{% if inicio %}
+<p>Desde {{ inicio|date:'d-m-Y' }} hasta {{ ultimo_dia|date:'d-m-Y' }}, ambas fechas incluidas.</p>
+<h2>Compras por proveedor</h2>
+<div class="card tabla-scroll">
+  <table>
+    <thead><tr><th scope="col">Proveedor</th><th scope="col" class="num">Total comprado</th></tr></thead>
+    <tbody>
+      {% for p in proveedores %}
+      <tr><td>{{ p.nombre }}</td><td class="num">{{ p.total_comprado|clp }}</td></tr>
+      {% empty %}
+      <tr><td colspan="2">Sin proveedores.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<h2>Productos más vendidos</h2>
+<p>Ordenados por cantidad. Compare cantidades dentro de la misma unidad de medida.</p>
+<div class="card tabla-scroll">
+  <table>
+    <thead><tr><th scope="col">Producto</th><th scope="col" class="num">Cantidad vendida</th><th scope="col">Unidad</th><th scope="col" class="num">Importe</th></tr></thead>
+    <tbody>
+      {% for p in productos %}
+      <tr>
+        <td>{{ p.producto__nombre }}</td>
+        <td class="num">{{ p.cantidad_vendida|floatformat:3 }}</td>
+        <td>{{ p.producto__unidad }}</td>
+        <td class="num">{{ p.total_vendido|clp }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">Sin ventas en este período.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
