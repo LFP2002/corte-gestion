@@ -1,8 +1,77 @@
 {% extends 'base.html' %}
+{% load moneda %}
+{% block titulo %}{{ titulo }}{% endblock %}
 {% block contenido %}
-<div class="cabecera"><h1>{{ titulo }}</h1>{% if user.es_dueno %}<a class="btn" href="{% url 'gestion:catalogo_crear' tipo %}">+ Nuevo registro</a>{% endif %}</div>
-<form method="get" class="fila"><label>Buscar por nombre<input name="q" value="{{ request.GET.q }}"></label><button class="btn">Buscar</button></form>
-<div class="card tabla-scroll"><table><thead><tr><th>Nombre</th>{% if tipo == 'productos' %}<th>Unidad</th><th>Precio de venta</th><th>Stock</th>{% else %}<th>RUT</th><th>Teléfono</th><th>Correo</th>{% endif %}<th>Activo</th><th>Acciones</th></tr></thead>
-<tbody>{% for o in objetos %}<tr><td>{{ o.nombre }}</td>{% if tipo == 'productos' %}<td>{{ o.unidad }}</td><td>${{ o.precio_venta }}</td><td>{{ o.stock }}</td>{% else %}<td>{{ o.rut }}</td><td>{{ o.telefono }}</td><td>{{ o.email }}</td>{% endif %}<td>{{ o.activo|yesno:'Sí,No' }}</td><td>{% if user.es_dueno %}<a href="{% url 'gestion:catalogo_editar' tipo o.pk %}">Editar</a> · <a href="{% url 'gestion:catalogo_eliminar' tipo o.pk %}">Eliminar</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="7">Sin registros.</td></tr>{% endfor %}</tbody></table></div>
+<div class="cabecera">
+  <h1>{{ titulo }}</h1>
+  {% if user.es_dueno %}
+    {% if tipo == 'productos' %}
+      <a class="btn" href="{% url 'gestion:catalogo_crear' tipo %}">+ Nuevo producto</a>
+    {% else %}
+      <a class="btn" href="{% url 'gestion:catalogo_crear' tipo %}">+ Nuevo proveedor</a>
+    {% endif %}
+  {% endif %}
+</div>
+<form method="get" class="search-form" role="search">
+  <div class="campo-busqueda">
+    <label for="buscar-catalogo">Buscar por nombre</label>
+    <input id="buscar-catalogo" name="q" type="search" value="{{ request.GET.q }}">
+  </div>
+  <button class="btn" type="submit">Buscar</button>
+</form>
+<div class="card tabla-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Nombre</th>
+        {% if tipo == 'productos' %}
+        <th scope="col">Unidad</th>
+        <th scope="col" class="num">Precio de venta</th>
+        <th scope="col" class="num">Stock</th>
+        {% else %}
+        <th scope="col">RUT</th>
+        <th scope="col">Teléfono</th>
+        <th scope="col">Correo</th>
+        {% endif %}
+        <th scope="col">Estado</th>
+        {% if user.es_dueno %}<th scope="col">Acciones</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in objetos %}
+      <tr>
+        <td>{{ o.nombre }}</td>
+        {% if tipo == 'productos' %}
+        <td>{{ o.unidad }}</td>
+        <td class="num">{{ o.precio_venta|clp }}</td>
+        <td class="num">{{ o.stock|floatformat:3 }}</td>
+        {% else %}
+        <td>{{ o.rut }}</td>
+        <td>{{ o.telefono }}</td>
+        <td>{{ o.email }}</td>
+        {% endif %}
+        <td>
+          {% if not o.activo %}
+            <span class="estado estado-inactivo">Inactivo</span>
+          {% elif tipo == 'productos' and o.stock == 0 %}
+            <span class="estado estado-agotado">Agotado</span>
+          {% else %}
+            <span class="estado estado-disponible">Activo</span>
+          {% endif %}
+        </td>
+        {% if user.es_dueno %}
+        <td class="acciones">
+          <a href="{% url 'gestion:catalogo_editar' tipo o.pk %}">Editar</a>
+          <span aria-hidden="true">·</span>
+          <a href="{% url 'gestion:catalogo_eliminar' tipo o.pk %}">Eliminar</a>
+        </td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr><td colspan="7">No hay registros para mostrar.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% include 'gestion/paginacion.html' with pagina=objetos %}
 {% endblock %}
