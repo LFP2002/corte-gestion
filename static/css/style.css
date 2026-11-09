@@ -113,3 +113,65 @@ input[type="checkbox"] { width: auto; }
 .grid > a.card { text-decoration: none; color: var(--ink); }
 .grid > a.card:hover { border-color: var(--brand); }
 @media (max-width: 600px) { main { padding: 1rem; } .topbar { padding: .7rem 1rem; } .sesion { flex-wrap: wrap; } }
+
+
+/* Mejora visual controlada: indicadores, búsquedas y estados. */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+.dashboard-stats .card { margin: 0; min-width: 0; }
+.dashboard-stats .kpi .etiqueta { margin: 0 0 .5rem; font-weight: 600; }
+.dashboard-stats .kpi .valor { margin: 0; font-size: clamp(1.35rem, 2.3vw, 2rem); overflow-wrap: anywhere; }
+.dashboard-stats .kpi .valor.alerta { color: var(--brand); }
+.section-heading { margin: 0 0 1rem; }
+.grid > a.card { min-height: 140px; transition: border-color .15s ease, box-shadow .15s ease; }
+.grid > a.card:hover { box-shadow: 0 4px 16px rgba(42,31,28,.07); }
+.grid > a.card:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+.grid > a.card h3 { font-size: 1.15rem; margin: 0 0 .45rem; }
+.grid > a.card p { margin: 0; }
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: flex-end;
+  margin: 0 0 1rem;
+}
+.search-form .campo-busqueda {
+  flex: 1 1 280px;
+  max-width: 540px;
+}
+.search-form .campo-busqueda label { margin: 0 0 .25rem; }
+.search-form .btn { flex: 0 0 auto; width: auto; min-width: 110px; }
+
+.estado {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  font-size: .8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: .2rem .65rem;
+  white-space: nowrap;
+}
+.estado-disponible { color: #20562f; background: #e3f1e6; border-color: #b7d9bf; }
+.estado-agotado { color: #7e1724; background: #f6e4e4; border-color: #e3b3b8; }
+.estado-inactivo { color: #5c514b; background: #ece6dc; border-color: #d7c9b8; }
+.acciones { white-space: nowrap; }
+.paginacion { display: flex; gap: 1rem; align-items: center; margin: .6rem 0 1.2rem; }
+.paginacion a { font-weight: 600; }
+
+@media (max-width: 900px) {
+  .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .dashboard-stats { grid-template-columns: 1fr; }
+  .search-form .campo-busqueda { flex-basis: 100%; max-width: none; }
+  .search-form .btn { width: 100%; }
+  .grid > a.card { min-height: 110px; }
+  th, td { padding: .55rem .45rem; }
+}
