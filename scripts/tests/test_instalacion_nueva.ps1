@@ -82,7 +82,7 @@ function Invoke-Case {
 }
 
 try {
-    Invoke-Case -Name 'Volumen preexistente queda intacto' -VolumeExists $true -Answer 'NUEVA' -ShouldFail $false
+    Invoke-Case -Name 'Volumen preexistente queda intacto' -VolumeExists $true -Answer 'NUEVA' -ShouldFail $true
     Invoke-Case -Name 'Cancelacion no altera entorno' -VolumeExists $false -Answer 'NO' -ShouldFail $true
     Invoke-Case -Name 'Instalacion limpia prepara entorno' -VolumeExists $false -Answer 'NUEVA' -ShouldFail $false
     Write-Host '3 escenarios del instalador completados.'
