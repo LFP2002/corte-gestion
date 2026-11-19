@@ -70,7 +70,7 @@ README actualizado; informes anteriores marcados como registros históricos.
 3. Después de mover paquetes y recursos, `check` con backend montado: OK;
    **50 tests originales, OK (8,001 s)**. Sin modificar cuerpos ni aserciones para
    facilitar el refactor: únicamente rutas de imports/mocks.
-4. Imagen reorganizada construida y arrancada: tres servicios saludables.
+4. Imagen reorganizada construida y arrancada: web/db saludables; phpMyAdmin operativo.
 5. Validación integral sobre imagen nueva, sin montaje: resultados siguientes.
 
 | Comprobación ejecutada | Resultado |
@@ -79,6 +79,7 @@ README actualizado; informes anteriores marcados como registros históricos.
 | `docker compose up -d --build --wait` | Construcción y arranque correctos |
 | `docker compose exec -T web python manage.py check --database default` | 0 problemas |
 | `docker compose exec -T web python manage.py makemigrations --check --dry-run` | `No changes detected` |
+| `docker compose exec -T web python manage.py migrate --check` | Salida 0; sin migraciones pendientes |
 | `docker compose exec -T web python manage.py test --verbosity 2` | **55 tests, OK (7,590 s)**, sin omisiones |
 | `findstatic css/style.css js/operacion.js --verbosity 2` | Una ubicación por recurso: `/app/static/` |
 | `powershell -ExecutionPolicy Bypass -File scripts/tests/test_instalacion_nueva.ps1` | 3 escenarios aprobados, sin Docker destructivo |
@@ -160,9 +161,20 @@ Respaldo, snapshots de identidad/recuentos y hashes permanecen ignorados bajo
 
 ## GitHub y pendientes
 
-Publicación y verificación remota se registrarán al crear la PR borrador.
-No hacer merge automáticamente. No hay fallos automatizados locales conocidos.
-Los límites de revisión humana/RNF2 anteriores no son resultados aprobados.
+Commit de implementación: `fa1f877`, publicado en la rama solicitada.
+PR **borrador** hacia `main`: https://github.com/LFP2002/corte-gestion/pull/3.
+No se hizo merge ni se modificó `main`.
+
+GitHub Actions sobre el commit de implementación: **aprobado**, tanto Django/MariaDB
+en Linux (1 min 31 s) como instalación y estructura en Windows (10 s).
+Ejecución: https://github.com/LFP2002/corte-gestion/actions/runs/44640071479.
+La PR ejecuta además su propio workflow; consultar sus checks para el último commit.
+
+Advertencia remota no bloqueante: `actions/checkout@v4` declara Node 20 y GitHub
+lo ejecuta forzadamente en Node 24; los jobs terminaron correctamente. Actualizar
+esa acción puede tratarse por separado; no se cambian dependencias del proyecto.
+No hay fallos automatizados locales conocidos. Los límites de revisión humana/RNF2
+anteriores no son resultados aprobados.
 
 ## Ejecutar desde un clon nuevo
 
