@@ -206,8 +206,20 @@ emergencia del README. La expiración no necesita cron: se evalúa en cada nuevo
   Contenedor temporal retirado, credenciales temporales eliminadas; ninguna cuenta
   de prueba se creó en la base operativa. Capturas permanecen fuera del repositorio.
 
-CI y PR se registrarán al publicar. No presentar esos pasos pendientes
-como aprobados hasta ejecutar las comprobaciones.
+Publicación de implementación: commit `d712d28`, rama
+`feat/seguridad-usuarios-filtros-estadisticas`, creada desde `main`.
+PR **borrador**: https://github.com/LFP2002/corte-gestion/pull/4, base `main`, sin merge.
+
+GitHub Actions **aprobado** desde checkout limpio, con construcción de la imagen,
+MariaDB real, 99 pruebas, migraciones y Windows:
+- Push: https://github.com/LFP2002/corte-gestion/actions/runs/44648373468
+  (Linux 1 min 43 s, Windows 11 s).
+- PR: https://github.com/LFP2002/corte-gestion/actions/runs/44648428877
+  (Linux 1 min 56 s, Windows 10 s).
+
+Los checks de la PR reflejan la ejecución más reciente del último commit publicado.
+No hay fallos automatizados conocidos. Continúan pendientes la aprobación humana
+y las limitaciones de despliegue público/usabilidad descritas a continuación.
 
 ## Actualización y operación desde la raíz
 
