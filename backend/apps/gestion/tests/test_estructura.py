@@ -45,6 +45,7 @@ class EstructuraTests(SimpleTestCase):
             ('usuarios', '0002_bloqueo_acceso'),
             ('gestion', '0001_initial'),
             ('gestion', '0002_detalleventa_venta_and_more'),
+            ('gestion', '0003_rol_vendedor_al_registrar'),
         })
 
     def test_urls_apuntan_a_paquetes_nuevos(self):

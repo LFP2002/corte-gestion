@@ -26,8 +26,14 @@ class MesForm(forms.Form):
 
 def ranking_empleados(mes):
     fin = date(mes.year + (mes.month == 12), mes.month % 12 + 1, 1)
-    return (Venta.objects.filter(fecha__gte=mes, fecha__lt=fin, usuario__rol='empleado')
+    return (Venta.objects.filter(fecha__gte=mes, fecha__lt=fin, rol_vendedor_al_registrar='empleado')
             .values('usuario_id', 'usuario__first_name', 'usuario__last_name',
                     'usuario__username', 'usuario__is_active')
             .annotate(total_vendido=Sum('total'), cantidad_ventas=Count('pk'))
             .order_by('-total_vendido', '-cantidad_ventas', 'usuario_id'))
+
+
+def ventas_sin_rol_verificado(mes):
+    fin = date(mes.year + (mes.month == 12), mes.month % 12 + 1, 1)
+    return Venta.objects.filter(fecha__gte=mes, fecha__lt=fin,
+                                rol_vendedor_al_registrar__isnull=True).count()

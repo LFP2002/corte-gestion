@@ -9,7 +9,7 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from apps.gestion.models import Producto, Venta
-from apps.gestion.statistics import MesForm, mes_actual, ranking_empleados
+from apps.gestion.statistics import MesForm, mes_actual, ranking_empleados, ventas_sin_rol_verificado
 from django.db.models.deletion import ProtectedError
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
@@ -153,5 +153,6 @@ class EmpleadoMes(SoloDueno, TemplateView):
             mes = form.cleaned_data['mes']
             ranking = list(ranking_empleados(mes)[:3])
             contexto.update(mes_evaluado=mes, ranking=ranking,
+                            ventas_sin_rol=ventas_sin_rol_verificado(mes),
                             destacado=ranking[0] if ranking else None)
         return contexto

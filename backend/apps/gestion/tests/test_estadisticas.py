@@ -18,7 +18,9 @@ class EmpleadoMesTests(TestCase):
         cls.maria = Usuario.objects.create_user('maria', 'maria@example.test', first_name='María')
 
     def venta(self, usuario, total, fecha=date(2026, 10, 15)):
-        return Venta.objects.create(usuario=usuario, total=total, fecha=fecha)
+        # Estas fixtures representan ventas con rol conocido al registrarlas.
+        return Venta.objects.create(usuario=usuario, total=total, fecha=fecha,
+                                    rol_vendedor_al_registrar=usuario.rol)
 
     def ranking(self, mes=date(2026, 10, 1)):
         return list(ranking_empleados(mes))
@@ -84,3 +86,41 @@ class EmpleadoMesTests(TestCase):
         self.assertEqual(self.client.get(reverse('empleado_mes')).status_code, 403)
         self.assertNotContains(self.client.get('/'), 'Empleado del mes')
         self.assertNotIn('ranking', self.client.get('/').context)
+
+    def test_snapshot_empleado_no_desaparece_al_convertirse_en_dueno(self):
+        venta = self.venta(self.pedro, 510000)
+        Usuario.objects.filter(pk=self.pedro.pk).update(rol='dueno')
+        self.assertEqual(self.ranking()[0]['usuario_id'], self.pedro.pk)
+        venta.refresh_from_db()
+        self.assertEqual(venta.rol_vendedor_al_registrar, 'empleado')
+
+    def test_snapshot_dueno_no_entra_al_convertirse_en_empleado(self):
+        venta = self.venta(self.dueno, 999999)
+        Usuario.objects.filter(pk=self.dueno.pk).update(rol='empleado')
+        self.assertEqual(self.ranking(), [])
+        venta.refresh_from_db()
+        self.assertEqual(venta.rol_vendedor_al_registrar, 'dueno')
+
+    def test_ventas_anteriores_sin_snapshot_no_se_infieren_y_advierten(self):
+        anterior = Venta.objects.create(usuario=self.pedro, fecha=date(2026, 10, 10), total=999999)
+        self.venta(self.luis, 100)
+        self.client.force_login(self.dueno)
+        respuesta = self.client.get(reverse('empleado_mes'), {'mes': '2026-10'})
+        self.assertEqual(respuesta.context['destacado']['usuario_id'], self.luis.pk)
+        self.assertEqual(respuesta.context['ventas_sin_rol'], 1)
+        self.assertContains(respuesta, 'sin rol histórico verificado')
+        self.assertContains(respuesta, 'puede estar incompleto')
+        Usuario.objects.filter(pk=self.pedro.pk).update(rol='dueno')
+        self.assertEqual(self.ranking()[0]['usuario_id'], self.luis.pk)
+        anterior.refresh_from_db()
+        self.assertIsNone(anterior.rol_vendedor_al_registrar)
+
+    def test_solo_ventas_anteriores_muestran_estado_incompleto_no_un_ganador(self):
+        Venta.objects.create(usuario=self.pedro, fecha=date(2026, 10, 10), total=999999)
+        self.client.force_login(self.dueno)
+        respuesta = self.client.get(reverse('empleado_mes'), {'mes': '2026-10'})
+        self.assertIsNone(respuesta.context['destacado'])
+        self.assertContains(respuesta, 'solo a ventas con rol histórico verificado')
+        respuesta = self.client.get(reverse('empleado_mes'), {'mes': '2026-09'})
+        self.assertEqual(respuesta.context['ventas_sin_rol'], 0)
+        self.assertNotContains(respuesta, 'puede estar incompleto')
