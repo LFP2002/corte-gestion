@@ -265,3 +265,30 @@ input[type="checkbox"] { width: auto; }
   }
   .topbar .sesion { justify-self: start; }
 }
+
+
+/* Formularios de compra y venta: una línea inicial y bloques legibles. */
+.datos-operacion { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: .9rem; margin-bottom: 1.25rem; }
+.datos-operacion .campo { margin: 0; }
+.detalle-producto { border-top: 1px solid var(--line); padding: 1rem 0; }
+.detalle-producto[hidden] { display: none !important; }
+.detalle-encabezado { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; margin-bottom: .75rem; }
+.detalle-nombre { font: 700 1.08rem/1.3 Georgia, "Times New Roman", serif; margin: 0; }
+.detalle-campos { display: grid; grid-template-columns: minmax(200px, 2fr) minmax(120px, 1fr) minmax(140px, 1fr); gap: .8rem; }
+.detalle-campos .campo { margin: 0; min-width: 0; }
+.detalle-campos input, .detalle-campos select { width: 100%; }
+.detalle-encabezado [data-quitar][hidden] { display: none; }
+.acciones-formulario { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-top: 1.4rem; }
+#agregar:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Barra de reportes: campos y acción alineados en el mismo borde inferior. */
+.reporte-form { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr); align-items: end; gap: .85rem; }
+.reporte-form .campo { min-width: 0; margin: 0; }
+.reporte-form input, .reporte-form select, .reporte-form .btn { height: 44px; }
+.reporte-form .btn { width: 100%; display: flex; justify-content: center; align-items: center; }
+.reporte-form .errorlist { margin-bottom: .2rem; }
+@media (max-width: 700px) {
+  .detalle-campos { grid-template-columns: 1fr; }
+  .reporte-form { grid-template-columns: 1fr; }
+  .acciones-formulario .btn { flex: 1 1 auto; text-align: center; }
+}
