@@ -3,8 +3,14 @@
 {% block titulo %}Reportes{% endblock %}
 {% block contenido %}
 <h1>Reportes</h1>
-<form method="get" class="card fila">
-  {{ form.as_p }}
+<form method="get" class="card reporte-form" aria-label="Seleccionar período del reporte">
+  {{ form.non_field_errors }}
+  <div class="campo">
+    {{ form.periodo.label_tag }}{{ form.periodo }}{{ form.periodo.errors }}
+  </div>
+  <div class="campo">
+    {{ form.fecha.label_tag }}{{ form.fecha }}{{ form.fecha.errors }}
+  </div>
   <button class="btn" type="submit">Consultar período</button>
 </form>
 {% if inicio %}
@@ -12,18 +18,33 @@
 <h2>Compras por proveedor</h2>
 <div class="card tabla-scroll">
   <table>
-    <thead><tr><th scope="col">Proveedor</th><th scope="col" class="num">Total comprado</th></tr></thead>
+    <thead>
+      <tr>
+        <th scope="col">Proveedor</th>
+        <th scope="col" class="num">Compras</th>
+        <th scope="col" class="num">Total comprado</th>
+        <th scope="col">Producto más comprado</th>
+        <th scope="col">Última compra</th>
+      </tr>
+    </thead>
     <tbody>
       {% for p in proveedores %}
-      <tr><td>{{ p.nombre }}</td><td class="num">{{ p.total_comprado|clp }}</td></tr>
+      <tr>
+        <td>{{ p.nombre }}</td>
+        <td class="num">{{ p.cantidad_compras }}</td>
+        <td class="num">{{ p.total_comprado|clp }}</td>
+        <td>{{ p.producto_destacado|default:'—' }}</td>
+        <td>{% if p.ultima_compra %}{{ p.ultima_compra|date:'d-m-Y' }}{% else %}—{% endif %}</td>
+      </tr>
       {% empty %}
-      <tr><td colspan="2">Sin proveedores.</td></tr>
+      <tr><td colspan="5">Sin proveedores para mostrar.</td></tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+<p class="reporte-nota">El producto más comprado se determina por el importe acumulado de sus compras en el período.</p>
 <h2>Productos más vendidos</h2>
-<p>Ordenados por cantidad. Compare cantidades dentro de la misma unidad de medida.</p>
+<p>Ordenados por cantidad vendida, considerando la unidad de cada producto.</p>
 <div class="card tabla-scroll">
   <table>
     <thead><tr><th scope="col">Producto</th><th scope="col" class="num">Cantidad vendida</th><th scope="col">Unidad</th><th scope="col" class="num">Importe</th></tr></thead>
