@@ -27,6 +27,44 @@ class ReportesTests(BaseNegocio):
         self.assertEqual(datos[0].total_comprado, Decimal('60000'))
         self.assertEqual(datos[1].total_comprado, 0)
 
+    def test_proveedor_muestra_compras_ultima_fecha_y_producto_por_importe(self):
+        pernil = Producto.objects.create(nombre='Pernil', unidad='unidad', precio_venta=10000)
+        registrar_compra(
+            usuario=self.dueno, proveedor=self.proveedor, fecha=date(2026, 11, 10),
+            lineas=[self.linea('2', '45000', pernil)],
+        )
+        registrar_compra(
+            usuario=self.dueno, proveedor=self.proveedor, fecha=date(2026, 11, 12),
+            lineas=[self.linea('1', '10000', pernil)],
+        )
+        Proveedor.objects.create(nombre='Sin compras')
+        with self.assertNumQueries(1):
+            datos = list(compras_por_proveedor(date(2026, 11, 1), date(2026, 12, 1)))
+        self.assertEqual(datos[0].nombre, self.proveedor.nombre)
+        self.assertEqual(datos[0].total_comprado, Decimal('160000'))
+        self.assertEqual(datos[0].cantidad_compras, 3)
+        self.assertEqual(datos[0].ultima_compra, date(2026, 11, 12))
+        self.assertEqual(datos[0].producto_destacado, 'Pernil')
+        self.assertEqual(datos[1].cantidad_compras, 0)
+        self.assertIsNone(datos[1].ultima_compra)
+        self.assertIsNone(datos[1].producto_destacado)
+        diciembre = list(compras_por_proveedor(date(2026, 12, 1), date(2027, 1, 1)))
+        self.assertEqual(diciembre[0].total_comprado, Decimal('5000'))
+        self.assertEqual(diciembre[0].cantidad_compras, 1)
+        self.assertEqual(diciembre[0].producto_destacado, 'Posta rosada')
+
+    def test_reportes_html_incluye_nuevas_columnas_y_campos_alineados(self):
+        self.client.force_login(self.dueno)
+        respuesta = self.client.get(reverse('gestion:reportes'), {'periodo': 'mes', 'fecha': '2026-11-12'})
+        self.assertContains(respuesta, 'class="card reporte-form"')
+        self.assertContains(respuesta, 'Producto más comprado')
+        self.assertContains(respuesta, 'Última compra')
+        self.assertContains(respuesta, 'Compras')
+        self.assertContains(respuesta, '08-11-2026')
+        self.assertContains(respuesta, 'Posta rosada')
+        self.assertContains(respuesta, 'importe acumulado')
+        self.assertContains(respuesta, '$60.000')
+
     def test_ventas_por_semana_y_mes(self):
         semana = list(productos_mas_vendidos(date(2026, 11, 2), date(2026, 11, 9)))
         mes = list(productos_mas_vendidos(date(2026, 11, 1), date(2026, 12, 1)))
