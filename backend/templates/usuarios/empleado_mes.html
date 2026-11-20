@@ -16,7 +16,10 @@
   <div class="tabla-scroll"><table><thead><tr><th>Empleado</th><th>Ventas</th><th>Total vendido</th></tr></thead><tbody>
     {% for puesto in ranking %}<tr><td>{{ puesto.usuario__first_name|default:puesto.usuario__username }} {{ puesto.usuario__last_name }}{% if not puesto.usuario__is_active %} (inactivo){% endif %}</td><td>{{ puesto.cantidad_ventas }}</td><td class="num">{{ puesto.total_vendido|clp }}</td></tr>{% endfor %}
   </tbody></table></div>
-  {% else %}<p class="vacio">No hay ventas de empleados en este mes.</p>{% if ventas_sin_rol %}<p>Esta ausencia se refiere solo a ventas con rol histórico verificado.</p>{% endif %}{% endif %}
+  {% else %}
+    {% if ventas_sin_rol %}<p class="vacio">No hay ventas con rol de empleado verificado en este mes.</p><p>Esta ausencia se refiere solo a ventas con rol histórico verificado.</p>
+    {% else %}<p class="vacio">No hay ventas de empleados en este mes.</p>{% endif %}
+  {% endif %}
 </section>
 {% endif %}
 <p>Solo ventas registradas con rol de empleado, incluidos quienes hoy están inactivos o cambiaron de rol. Desempates: mayor cantidad de ventas y después ID de usuario ascendente. Se utiliza la fecha comercial registrada de cada venta; mes calendario de America/Santiago. Las ventas sin snapshot no se atribuyen por el rol actual.</p>

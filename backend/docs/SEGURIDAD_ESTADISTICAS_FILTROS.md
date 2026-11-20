@@ -64,9 +64,22 @@ operativo se recomienda `crear_dueno`, sin privilegios staff/superusuario.
   incremento/reset y vencimiento. El error se lanza **fuera** de atomic para no
   revertir el contador. Los intentos durante el bloqueo no lo prolongan.
 - Éxito antes del umbral reinicia contador; tras expirar, comienza un ciclo nuevo.
+- Credenciales y autorización se evalúan por separado dentro del mismo bloqueo:
+  `authenticate()` verifica la contraseña con ModelBackend; después
+  `confirm_login_allowed()` aplica los permisos de AuthenticationForm/AdminAuthenticationForm.
+  Contraseña correcta de empleado (incluso staff) o dueño sin staff → admin denegado,
+  sin sumar fallos. Al ser credenciales válidas, reinicia el contador previo, pero
+  **nunca** un bloqueo vigente: se comprueba antes de autenticar en ambas rutas.
+  `user_cache` se borra al denegar el área y no se crea una sesión. Inactivos siguen
+  rechazados por el backend, sin reactivación ni incremento del contador (como antes).
 - Mensaje público idéntico para contraseña errónea, nombre inexistente, cuenta
   inactiva y bloqueada. No se crean registros para nombres inexistentes. También
   se realiza trabajo de hash para cuentas bloqueadas, sin almacenar la contraseña.
+- Texto renderizado y error del formulario unificados: «No fue posible iniciar sesión.
+  Verifica tus credenciales o solicita ayuda al dueño para recuperar el acceso.»
+  No se publican contador, vencimiento ni motivos particulares. El login conserva
+  CSRF y su alerta visual accesible. Se eliminaron importación y decorador
+  `sensitive_variables` duplicados; la protección permanece una sola vez.
 - Formularios incompletos se validan normalmente: no son comprobaciones de credenciales.
 - No se modifica `is_active` ni rol. No se expulsan sesiones existentes: además de
   conservar compatibilidad, un dueño con sesión puede recuperar cuentas sin quedar
@@ -88,8 +101,8 @@ Ruta exclusiva del dueño: `/estadisticas/empleado-del-mes/?mes=YYYY-MM`.
 Acceso desde Inicio; el empleado recibe 403 por URL directa y no recibe contexto
 ni enlace con el ranking. El resto de permisos comerciales se conserva.
 
-Consulta ORM única, sin tabla de estadísticas: filtrar ventas por `fecha` en
-`[primer día, primer día del mes siguiente)`, `usuario__rol='empleado'`, agrupar
+Consulta ORM agregada, sin tabla de estadísticas: filtrar ventas por `fecha` en
+`[primer día, primer día del mes siguiente)`, `rol_vendedor_al_registrar='empleado'`, agrupar
 por usuario y agregar Sum(total), Count(pk). Orden: monto DESC, cantidad DESC,
 usuario_id ASC. Se muestran hasta tres puestos y el destacado, importes CLP.
 Mes por defecto calculado explícitamente en America/Santiago; formato inválido o
@@ -97,8 +110,32 @@ mes futuro muestra error. No hay ventas de empleados → estado vacío, no un ga
 con cero ventas. Inactivos incluidos y etiquetados como históricos.
 
 `fecha` es la fecha **comercial** DateField existente, no `creado_en` reinterpretado
-en UTC. No se altera ninguna venta. La exclusión se basa en el rol actual del usuario:
-el esquema no almacena un historial de cambios de rol. No se calcula utilidad.
+en UTC. No se calcula utilidad. `Venta.rol_vendedor_al_registrar` conserva el rol al
+confirmar: `registrar_venta` relee y bloquea la cuenta en MariaDB dentro de la misma
+transacción que cabecera, detalles, stock y movimientos. No acepta el snapshot como
+argumento ni lo toma del formulario; el campo es `editable=False`. Una instancia de
+sesión obsoleta no sustituye el rol actual del servidor.
+
+El bloqueo de la cuenta se adquiere después de bloquear los productos en orden de PK,
+antes de guardar la venta; se mantiene hasta confirmar. Así se conserva el orden
+productos → usuario que también siguen las referencias FK de las compras, sin
+introducir un orden inverso que provoque ciclos entre compras y ventas. Los cambios
+de rol que coincidan con la operación quedan serializados frente al snapshot.
+
+Empleado → dueño no retira sus ventas anteriores del ranking; dueño → empleado no
+incluye sus ventas registradas como dueño. Inactivos conservan atribución y etiqueta
+histórica; nombres y estado de cuenta mostrados siguen siendo los actuales.
+
+**Datos anteriores:** la migración agrega el campo nullable, sin valor predeterminado
+ni backfill. `NULL` significa rol histórico **no verificado**, no empleado ni dueño.
+Esas ventas no participan en el ranking, independientemente del rol actual. Una
+consulta adicional cuenta las ventas sin snapshot del mes y muestra una advertencia
+de que el resultado puede estar incompleto; si solo hay registros desconocidos, no
+se presenta un ganador ni se afirma que no existieron ventas comerciales.
+No se infiere ni se corrige automáticamente ese dato: el sistema carece de evidencia
+del rol antiguo. Las ventas siguen visibles en el historial y sus totales, fechas,
+vendedores y movimientos no cambian. Importaciones directas sin evidencia deben
+conservar NULL; las operaciones de la aplicación deben usar `registrar_venta`.
 
 ### Filtros GET
 
@@ -129,12 +166,18 @@ y acciones amplias en móvil; tablas mantienen su scroll interno.
 
 ## Migración y protección de datos
 
-Única migración nueva: `usuarios/0002_bloqueo_acceso.py`, dos operaciones AddField.
+Primera entrega: `usuarios/0002_bloqueo_acceso.py`, dos operaciones AddField.
 Sin tablas nuevas, renombres, cambios de roles ni migraciones de datos. Todas las
 migraciones previas permanecen byte a byte intactas. La prueba estructural original
 solo añade esta migración al conjunto esperado; no se eliminó ningún escenario previo.
 
-Antes de aplicarla se exportó `backups/seguridad-filtros/antes.sql`, 25.182 bytes,
+Cierre técnico de PR #4: **`gestion/0003_rol_vendedor_al_registrar.py`**, una operación
+AddField nullable sin default y sin RunPython. Todas las migraciones ya publicadas
+permanecen intactas. Se generó y versionó antes de comprobar ausencia de cambios o
+migraciones pendientes. No crea tablas ni modifica valores comerciales.
+
+En la primera entrega, antes de aplicar `usuarios.0002`, se exportó
+`backups/seguridad-filtros/antes.sql`, 25.182 bytes,
 SHA256 `746ddcbe99a496fc2b363c05b60ad9883d43000bc7b0cc5bc2e549b1e5b710f5`.
 Respaldo consistente con rutinas, eventos, triggers y datos binarios; restaurado
 en **cortegestion_seguridad_verificacion** y comprobados recuentos de las 17 tablas.
@@ -195,7 +238,7 @@ indica README. Si el volumen debía existir y no existe, detenerse y recuperar e
 Recuperación de una cuenta: Usuarios → Desbloquear cuenta, o comando local de
 emergencia del README. La expiración no necesita cron: se evalúa en cada nuevo login.
 
-## Verificación ejecutada
+## Verificación de la primera entrega (registro histórico)
 
 - Baseline 55/55; intermedio 77/77 con seguridad; ranking/filtros específicos 19/19.
 - Suite ampliada **96/96, 22,825 s**, imagen reconstruida contra MariaDB real.
@@ -238,6 +281,80 @@ MariaDB real, 99 pruebas, migraciones y Windows:
 Los checks de la PR reflejan la ejecución más reciente del último commit publicado.
 No hay fallos automatizados conocidos. Continúan pendientes la aprobación humana
 y las limitaciones de despliegue público/usabilidad descritas a continuación.
+
+## Cierre técnico de observaciones de PR #4
+
+Revisión sobre la misma rama, desde `0d1f224`, sin otra PR ni cambios en `main`.
+Se confirmó que las tres observaciones seguían presentes y se ejecutó la referencia:
+**103/103 pruebas aprobadas, 25,611 s**, con MariaDB real.
+
+Correcciones de este cierre:
+- Separar `authenticate()` de `confirm_login_allowed()` sin cambiar backends,
+  sesiones ni hashing. Se conserva la transacción y el bloqueo de fila durante
+  ambas fases; solo credenciales incorrectas de cuentas activas suman fallos.
+  La autorización denegada no crea sesión y la contraseña correcta restablece
+  fallos previos, pero nunca un bloqueo vigente. No se concede acceso a inactivos.
+- La plantilla renderiza el error genérico del formulario en una alerta accesible,
+  sin texto contradictorio. Las pruebas verifican la respuesta HTML, no solo form.errors.
+- Snapshot de rol en ventas y exclusión explícita de históricos desconocidos,
+  con advertencia mensual. Se mantienen monto/cantidad/ID como desempate y los
+  permisos exclusivos del dueño. Se retiraron las duplicaciones del decorador/import.
+
+### Respaldo y migración ensayada
+
+Nuevo respaldo privado **antes de aplicar cambios**:
+`backups/pr4-correcciones/antes.sql`, 25.394 bytes,
+SHA256 `e485aa58083989f3e01fdeff09cfa006881616985c4395c0bc7267bd0017e07e`.
+Se restauró en `cortegestion_pr4_correcciones_verificacion` y se verificó el contenido
+de todas las columnas y filas de las 17 tablas mediante hashes, no solo recuentos.
+La copia aislada se conserva; no se borró ningún esquema ni volumen.
+
+Se ensayó primero allí `gestion.0003_rol_vendedor_al_registrar`, versionada en
+`8010a15`. Migrate/plan, aplicación, makemigrations --check y migrate --check:
+correctos. Todas las columnas originales conservaron valores; las ventas anteriores
+quedaron con snapshot NULL. Solo se añadió una fila a django_migrations.
+
+Después se reconstruyó y arrancó Compose contra el volumen conservado. Comparación
+real antes/después: **17 tablas**, mismas 2 cuentas y hashes, 2 compras, 2 ventas,
+3 detalles de venta y 5 movimientos; mismos productos, proveedores, permisos y
+content types. Todos los valores de las columnas originales, incluido el historial
+previo de migraciones, se mantuvieron idénticos. Las dos ventas anteriores tienen
+`rol_vendedor_al_registrar=NULL`; no se les asignó un rol inferido.
+Migraciones aplicadas: **22 →23**. Las migraciones históricas conservan sus bytes.
+El dump posterior y los snapshots de comparación permanecen ignorados por Git.
+
+### Pruebas y verificaciones de cierre
+
+- Intermedia con código montado: **121/121, 38,617 s**.
+- Imagen reconstruida sin montaje: **121/121, 38,099 s**, sin omisiones:
+  103 escenarios anteriores +18 nuevos. Configuración Django/DB sin problemas,
+  makemigrations --check --dry-run sin cambios y migrate --check sin pendientes.
+- `docker compose config --quiet` y `docker compose up -d --build --wait`: aprobados.
+- Scripts PowerShell del instalador (3 escenarios simulados) y estructura:
+  repetidos y aprobados; `git diff --check` sin errores ni secretos versionados.
+- Matriz de login normal/admin: empleados staff/no staff, dueños staff/no staff,
+  inactivos, contraseña correcta/incorrecta, bloqueo vigente, contador compartido,
+  autorización denegada sin sesión, y mensaje HTML genérico con CSRF.
+- Concurrencia MariaDB: denegaciones administrativas con credenciales correctas,
+  denegación frente al tercer fallo y fallos reales entre ambos logins; sin pérdida
+  de incrementos ni bypass. Permanecen los tests de expiración y desbloqueo previos.
+- Estadísticas: empleado→dueño, dueño→empleado, inactivos, NULL sin inferencia,
+  advertencia/estado vacío, empates, cambio de mes y denegación al empleado.
+- Venta real: snapshot del rol releído en servidor, rechazo de suplantación por HTTP,
+  rollback junto a stock y dos vendedores simultáneos con snapshot/stock coherentes.
+- Los escenarios previos de contraseñas, formularios de usuarios, operaciones,
+  inventario, filtros y paginación continúan aprobados.
+
+La fixture del helper `test_estadisticas.venta()` ahora declara el snapshot del rol
+conocido de sus ventas de prueba. Esto conserva los escenarios anteriores bajo el
+nuevo contrato; **no** realiza un backfill de datos reales. Los registros antiguos
+se prueban por separado sin snapshot. La prueba estructural solo incorpora la nueva
+migración al conjunto esperado; no se elimina ningún test para ocultar fallos.
+
+GitHub Actions del cierre debe verificarse sobre el último commit publicado; los
+enlaces de la sección histórica corresponden a la entrega anterior. El resultado
+actual y sus enlaces se registrarán en el comentario final de la PR #4. Mantener
+la PR en borrador, sin Ready for Review ni merge automático.
 
 ## Actualización y operación desde la raíz
 
@@ -285,7 +402,9 @@ Detener con `docker compose stop`, nunca eliminar el volumen.
 - Los fallos cuentan por cuenta, no por IP; no hay CAPTCHA, MFA, email de recuperación
   ni tareas programadas. No se han añadido dependencias para esas funciones no pedidas.
 - Mantener el reloj del servidor sincronizado. No publicar DEBUG/runserver/phpMyAdmin.
-- El ranking refleja autoría de ventas y rol actual, no utilidad ni calidad de atención.
+- El ranking refleja autoría de ventas y rol registrado en el snapshot, no utilidad
+  ni calidad de atención. Las ventas anteriores sin evidencia quedan fuera, con aviso;
+  no es posible reconstruir exactamente sus roles históricos con los datos disponibles.
 - Verificación de navegador automatizada, no estudio de usabilidad con personal/RNF2.
 
 ## Árbol de archivos nuevos y modificados
@@ -299,12 +418,16 @@ backend/
   apps/
     gestion/
       + filters.py
+      ~ models.py
+      ~ services.py
       + statistics.py
       ~ views.py
+      migrations/+ 0003_rol_vendedor_al_registrar.py
       templatetags/~ navegacion.py
       tests/
         + test_estadisticas.py
         + test_filtros.py
+        + test_snapshot_ventas.py
         ~ test_estructura.py
     usuarios/
       ~ admin.py
@@ -319,10 +442,12 @@ backend/
       management/commands/+ createsuperuser.py
       migrations/+ 0002_bloqueo_acceso.py
       tests/+ test_seguridad_cuentas.py
+      tests/+ test_acceso_admin.py
   config/~ settings.py
   docs/+ SEGURIDAD_ESTADISTICAS_FILTROS.md
   static/css/~ style.css
   templates/
+    registration/~ login.html
     gestion/
       ~ catalogo.html
       + filtros.html

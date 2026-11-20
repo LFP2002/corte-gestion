@@ -91,6 +91,13 @@ Un acceso correcto antes del tercer fallo reinicia el contador. El bloqueo no ca
 solo el dueño puede usar **Desbloquear cuenta** (POST con CSRF). Cambiar una contraseña
 no desbloquea automáticamente una cuenta.
 
+Se distinguen credenciales y permisos: una contraseña correcta de empleado o de
+dueño sin `is_staff` no permite entrar a Django Admin, pero tampoco suma un fallo.
+Restablece el contador solo si no había un bloqueo vigente. Contraseñas erróneas
+comparten el contador entre ambos logins; ninguna vía administrativa evita el bloqueo.
+El mensaje público es: «No fue posible iniciar sesión. Verifica tus credenciales o
+solicita ayuda al dueño para recuperar el acceso.»
+
 Si el único dueño queda bloqueado y no conserva una sesión, el operador con acceso
 autorizado al equipo puede recuperar **solo** el bloqueo temporal:
 
@@ -105,10 +112,14 @@ en su perímetro; el bloqueo por cuenta no impide ataques distribuidos de denega
 ### Empleado del mes y filtros
 
 El dueño accede desde Inicio → **Empleado del mes**. Ranking por **monto total de
-ventas registradas**, no utilidad ni cantidad de productos. Desempates: cantidad
-de ventas descendente y luego ID de usuario ascendente. Excluye dueños, incluye
+ventas registradas con rol de empleado**, no utilidad ni cantidad de productos. Desempates: cantidad
+de ventas descendente y luego ID de usuario ascendente. Excluye ventas registradas como dueño, incluye
 empleados actualmente inactivos con etiqueta histórica y permite consultar meses
-anteriores. Usa fecha comercial y mes calendario de `America/Santiago`.
+anteriores. Cada venta nueva conserva el rol real del vendedor en la misma
+transacción; los cambios de rol posteriores no reclasifican sus ventas.
+Las ventas anteriores sin snapshot mantienen `NULL`: no se infieren roles y se
+excluyen del ranking, con advertencia de resultado incompleto para ese mes.
+Usa fecha comercial y mes calendario de `America/Santiago`.
 El empleado conserva indicadores personales e historial global, pero no el ranking.
 
 Productos, proveedores, ventas, compras, inventario y usuarios tienen un panel
