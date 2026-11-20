@@ -8,6 +8,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 
+from apps.usuarios.models import Usuario
 from .models import Compra, DetalleCompra, DetalleVenta, MovimientoStock, Producto, Proveedor, Venta
 
 CENTAVO = Decimal('0.01')
@@ -82,10 +83,16 @@ def registrar_venta(*, usuario, fecha, lineas):
     validar_usuario(usuario)
     lineas = preparar_lineas(lineas)
     productos = bloquear_productos(lineas)
+    # Productos antes de usuario: mismo orden que las referencias de las compras.
+    # Mantener esta fila bloqueada hasta confirmar evita usar un rol/sesión obsoleto
+    # o capturar un cambio de rol concurrente a mitad de la operación.
+    usuario = Usuario.objects.select_for_update().get(pk=usuario.pk)
+    validar_usuario(usuario)
     for pk, cantidad, _, _ in lineas:
         if productos[pk].stock < cantidad:
             raise ValidationError(f'Stock insuficiente para {productos[pk].nombre}: disponible {productos[pk].stock}.')
-    venta = Venta(usuario=usuario, fecha=fecha, total=sum(linea[3] for linea in lineas))
+    venta = Venta(usuario=usuario, fecha=fecha, total=sum(linea[3] for linea in lineas),
+                  rol_vendedor_al_registrar=usuario.rol)
     venta.full_clean()
     venta.save()
     for pk, cantidad, precio, subtotal in lineas:

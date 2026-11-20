@@ -71,6 +71,65 @@ La primera descarga/compilación puede tardar varios minutos. No se ejecutan
 
 ## Uso y roles
 
+### Seguridad de cuentas
+
+Las contraseñas **nuevas** requieren al menos 8 caracteres, mayúscula, minúscula,
+número y símbolo; un espacio no cuenta como símbolo. Se mantienen los validadores
+Django existentes. Las cuentas y contraseñas anteriores siguen funcionando sin
+restablecimiento obligatorio. La política se aplica a alta/edición de cuentas,
+formularios del admin Django, `crear_dueno`, su alias y `changepassword`.
+También se endurece `createsuperuser`: sin opción de omitir validación, incluso
+con contraseña de entorno en modo no interactivo. Este comando privilegiado crea
+un dueño staff/superusuario; para el uso cotidiano se mantiene `crear_dueno` sin
+privilegios de admin Django. Sin contraseña de entorno, `--noinput` crea una cuenta
+sin contraseña utilizable, no una credencial débil.
+
+Tres credenciales incorrectas bloquean nuevos logins durante **15 minutos**.
+El login público no revela si la cuenta existe, está desactivada o bloqueada.
+Un acceso correcto antes del tercer fallo reinicia el contador. El bloqueo no cambia
+`is_active`, roles ni sesiones ya establecidas. Usuarios muestra el vencimiento;
+solo el dueño puede usar **Desbloquear cuenta** (POST con CSRF). Cambiar una contraseña
+no desbloquea automáticamente una cuenta.
+
+Se distinguen credenciales y permisos: una contraseña correcta de empleado o de
+dueño sin `is_staff` no permite entrar a Django Admin, pero tampoco suma un fallo.
+Restablece el contador solo si no había un bloqueo vigente. Contraseñas erróneas
+comparten el contador entre ambos logins; ninguna vía administrativa evita el bloqueo.
+El mensaje público es: «No fue posible iniciar sesión. Verifica tus credenciales o
+solicita ayuda al dueño para recuperar el acceso.»
+
+Si el único dueño queda bloqueado y no conserva una sesión, el operador con acceso
+autorizado al equipo puede recuperar **solo** el bloqueo temporal:
+
+```powershell
+docker compose exec web python manage.py desbloquear_usuario NOMBRE_USUARIO
+```
+
+No activa cuentas desactivadas ni cambia contraseñas/roles. No exponga este comando
+como endpoint web. Un despliegue público necesita además limitación de peticiones
+en su perímetro; el bloqueo por cuenta no impide ataques distribuidos de denegación.
+
+### Empleado del mes y filtros
+
+El dueño accede desde Inicio → **Empleado del mes**. Ranking por **monto total de
+ventas registradas con rol de empleado**, no utilidad ni cantidad de productos. Desempates: cantidad
+de ventas descendente y luego ID de usuario ascendente. Excluye ventas registradas como dueño, incluye
+empleados actualmente inactivos con etiqueta histórica y permite consultar meses
+anteriores. Cada venta nueva conserva el rol real del vendedor en la misma
+transacción; los cambios de rol posteriores no reclasifican sus ventas.
+Las ventas anteriores sin snapshot mantienen `NULL`: no se infieren roles y se
+excluyen del ranking, con advertencia de resultado incompleto para ese mes.
+Usa fecha comercial y mes calendario de `America/Santiago`.
+El empleado conserva indicadores personales e historial global, pero no el ranking.
+
+Productos, proveedores, ventas, compras, inventario y usuarios tienen un panel
+**Filtros** nativo, cerrado inicialmente. Abrir/cerrar no recarga la página; aplicar
+usa GET, conserva selecciones y paginación, y muestra un indicador aunque se cierre.
+Los parámetros inválidos muestran errores y no amplían silenciosamente resultados.
+
+Detalle técnico, migración aditiva, parámetros GET, pruebas y límites:
+[`backend/docs/SEGURIDAD_ESTADISTICAS_FILTROS.md`](backend/docs/SEGURIDAD_ESTADISTICAS_FILTROS.md).
+
 | Operación | Dueño | Empleado |
 |---|---|---|
 | Consultar productos, precios y stock | Sí | Sí |

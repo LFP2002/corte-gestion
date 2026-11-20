@@ -42,8 +42,10 @@ class EstructuraTests(SimpleTestCase):
         migrations = {key for key in loader.disk_migrations if key[0] in ('usuarios', 'gestion')}
         self.assertEqual(migrations, {
             ('usuarios', '0001_initial'),
+            ('usuarios', '0002_bloqueo_acceso'),
             ('gestion', '0001_initial'),
             ('gestion', '0002_detalleventa_venta_and_more'),
+            ('gestion', '0003_rol_vendedor_al_registrar'),
         })
 
     def test_urls_apuntan_a_paquetes_nuevos(self):

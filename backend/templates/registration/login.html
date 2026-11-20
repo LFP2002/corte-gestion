@@ -2,7 +2,7 @@
 {% block titulo %}Ingresar{% endblock %}
 {% block formulario %}
 <h2>Ingresar a CorteGestión</h2>
-{% if form.errors %}<div class="flash error">Usuario o contraseña incorrectos.</div>{% endif %}
+{% if form.errors %}<div class="flash error" role="alert">{% if form.non_field_errors %}{% for error in form.non_field_errors %}{{ error }}{% endfor %}{% else %}Completa el usuario y la contraseña para iniciar sesión.{% endif %}</div>{% endif %}
 <form method="post">{% csrf_token %}
   <input type="hidden" name="next" value="{{ next }}">
   <div class="campo"><label for="id_username">Usuario</label>

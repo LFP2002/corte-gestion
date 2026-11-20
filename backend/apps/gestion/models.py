@@ -81,6 +81,13 @@ class DetalleCompra(DetalleBase):
 
 
 class Venta(Operacion):
+    # NULL identifica operaciones anteriores al snapshot o importaciones sin evidencia.
+    # No inferir un rol histórico a partir del estado actual de la cuenta.
+    rol_vendedor_al_registrar = models.CharField(
+        max_length=10, choices=[('dueno', 'Dueño'), ('empleado', 'Empleado')],
+        null=True, blank=True, editable=False,
+    )
+
     class Meta(Operacion.Meta):
         abstract = False
         constraints = [models.CheckConstraint(condition=models.Q(total__gt=0), name='venta_total_positivo')]

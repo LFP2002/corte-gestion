@@ -5,16 +5,22 @@
   <div><h1>Usuarios</h1><p>Cuentas guardadas en MariaDB (contraseñas protegidas con hash). Las cuentas con historial se desactivan al editar.</p></div>
   <a class="btn" href="{% url 'usuario_crear' %}">+ Nuevo usuario</a>
 </div>
+{% include 'gestion/filtros.html' %}
 <div class="card tabla-scroll"><table>
-  <tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Creado</th><th></th></tr>
+  <tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acceso</th><th>Creado</th><th></th></tr>
   {% for u in usuarios %}
   <tr><td>{{ u.id }}</td><td>{{ u.first_name }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td>
     <td><span class="badge {{ u.rol }}">{{ u.get_rol_display }}</span></td>
+    <td>{% if u.is_active %}Activo{% else %}Desactivado{% endif %}</td>
+    <td>{% if u.cuenta_bloqueada %}<span class="estado estado-agotado">Bloqueado</span><br>Hasta {{ u.bloqueo_hasta|date:'d-m-Y H:i:s' }} (America/Santiago){% else %}Sin bloqueo temporal{% endif %}
+      {% if u.intentos_fallidos or u.bloqueo_hasta %}<form method="post" action="{% url 'usuario_desbloquear' u.pk %}">{% csrf_token %}<button class="btn sec mini" type="submit">Desbloquear cuenta</button></form>{% endif %}
+    </td>
     <td>{{ u.date_joined|date:"d-m-Y H:i" }}</td>
     <td><form class="inline" method="post" action="{% url 'usuario_eliminar' u.pk %}"
               onsubmit="return confirm('¿Eliminar a {{ u.username }}?')">{% csrf_token %}
       <a class="btn sec mini" href="{% url 'usuario_editar' u.pk %}">Editar</a>
       <button class="btn sec mini">Eliminar</button></form></td></tr>
-  {% endfor %}
+  {% empty %}<tr><td colspan="9">No hay usuarios para estos filtros.</td></tr>{% endfor %}
 </table></div>
+{% include 'gestion/paginacion.html' with pagina=page_obj %}
 {% endblock %}

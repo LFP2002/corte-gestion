@@ -13,6 +13,26 @@
   --warn-soft: #fbeed8;
   --radius: 10px;
 }
+
+/* Componentes nativos: abrir/cerrar filtros no provoca peticiones ni requiere JS. */
+.filtros { margin-bottom: 1rem; min-width: 0; }
+.filtros summary { display: list-item; width: fit-content; background: var(--brand); color: #fff; padding: .55rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.filtros summary:focus-visible { outline: 3px solid var(--brand-dark); outline-offset: 3px; }
+.filtros[open] summary { margin-bottom: .8rem; }
+.filtros-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .75rem; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); align-items: end; }
+.filtro-campo { min-width: 0; }
+.filtro-campo input, .filtro-campo select { max-width: 100%; min-width: 0; }
+.filtros-acciones { display: flex; flex-wrap: wrap; gap: .5rem; grid-column: 1 / -1; }
+.filtros-errores { grid-column: 1 / -1; }
+.filtros-indicador { color: var(--brand-dark); font-weight: 600; }
+.selector-mes { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; margin-bottom: 1rem; }
+.selector-mes > div { min-width: 0; max-width: 100%; }
+.monto-destacado { font-size: 1.7rem; font-weight: 700; color: var(--brand); }
+@media (max-width: 520px) {
+  .filtros-form { grid-template-columns: minmax(0, 1fr); }
+  .filtros-acciones .btn { flex: 1 1 100%; text-align: center; }
+  .selector-mes { flex-direction: column; align-items: stretch; }
+}
 * { box-sizing: border-box; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);

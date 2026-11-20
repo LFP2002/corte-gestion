@@ -10,6 +10,7 @@
     <a class="btn" href="{% url 'gestion:venta_crear' %}">+ Registrar venta</a>
   {% endif %}
 </div>
+{% include 'gestion/filtros.html' %}
 <div class="card tabla-scroll">
   <table>
     <thead><tr><th scope="col">ID</th><th scope="col">Fecha</th><th scope="col">{% if tipo == 'compra' %}Proveedor{% else %}Vendedor{% endif %}</th><th scope="col" class="num">Total</th><th scope="col">Detalle</th></tr></thead>

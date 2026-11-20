@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load moneda %}
+{% block titulo %}Empleado del mes{% endblock %}
+{% block contenido %}
+<div class="cabecera"><div><h1>Empleado del mes</h1><p>Reconocimiento por monto total vendido, no por utilidad ni cantidad de productos.</p></div><a class="btn sec" href="{% url 'inicio' %}">Volver al panel</a></div>
+<form method="get" class="selector-mes"><div>{{ mes_form.mes.label_tag }}{{ mes_form.mes }}{{ mes_form.mes.errors }}</div><button class="btn" type="submit">Consultar mes</button></form>
+{% if mes_evaluado %}
+<section class="card" aria-labelledby="mes-evaluado">
+  <h2 id="mes-evaluado">{{ mes_evaluado|date:'F Y'|capfirst }}</h2>
+  {% if ventas_sin_rol %}<p class="flash error" role="status">Hay {{ ventas_sin_rol }} venta{{ ventas_sin_rol|pluralize }} sin rol histórico verificado. Se excluyen del ranking; el resultado de este mes puede estar incompleto.</p>{% endif %}
+  {% if destacado %}
+  <h3>{{ destacado.usuario__first_name|default:destacado.usuario__username }} {{ destacado.usuario__last_name }}</h3>
+  <p class="monto-destacado">{{ destacado.total_vendido|clp }}</p>
+  <p>{{ destacado.cantidad_ventas }} venta{{ destacado.cantidad_ventas|pluralize }} registrada{{ destacado.cantidad_ventas|pluralize }}.</p>
+  {% if not destacado.usuario__is_active %}<p class="estado estado-inactivo">Cuenta actualmente inactiva · resultado histórico</p>{% endif %}
+  <div class="tabla-scroll"><table><thead><tr><th>Empleado</th><th>Ventas</th><th>Total vendido</th></tr></thead><tbody>
+    {% for puesto in ranking %}<tr><td>{{ puesto.usuario__first_name|default:puesto.usuario__username }} {{ puesto.usuario__last_name }}{% if not puesto.usuario__is_active %} (inactivo){% endif %}</td><td>{{ puesto.cantidad_ventas }}</td><td class="num">{{ puesto.total_vendido|clp }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}
+    {% if ventas_sin_rol %}<p class="vacio">No hay ventas con rol de empleado verificado en este mes.</p><p>Esta ausencia se refiere solo a ventas con rol histórico verificado.</p>
+    {% else %}<p class="vacio">No hay ventas de empleados en este mes.</p>{% endif %}
+  {% endif %}
+</section>
+{% endif %}
+<p>Solo ventas registradas con rol de empleado, incluidos quienes hoy están inactivos o cambiaron de rol. Desempates: mayor cantidad de ventas y después ID de usuario ascendente. Se utiliza la fecha comercial registrada de cada venta; mes calendario de America/Santiago. Las ventas sin snapshot no se atribuyen por el rol actual.</p>
+{% endblock %}

@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.password_validation import password_validators_help_text_html, validate_password
 
 from .models import Usuario
 
@@ -15,7 +15,8 @@ class UsuarioCrearForm(UserCreationForm):
 class UsuarioEditarForm(forms.ModelForm):
     password = forms.CharField(
         label='Nueva contraseña (vacío = no cambiar)', required=False,
-        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}), min_length=8)
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}), min_length=8,
+        help_text=password_validators_help_text_html())
 
     class Meta:
         model = Usuario

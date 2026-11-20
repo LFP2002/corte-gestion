@@ -39,6 +39,7 @@
     <a class="card" href="{% url 'gestion:catalogo' 'productos' %}"><h3>Productos</h3><p>Catálogo y precios.</p></a>
     <a class="card" href="{% url 'gestion:stock' %}"><h3>Inventario</h3><p>Consultar existencias actuales.</p></a>
     {% if user.es_dueno %}
+    <a class="card" href="{% url 'empleado_mes' %}"><h3>Empleado del mes</h3><p>Consultar el desempeño comercial mensual del equipo.</p></a>
     <a class="card" href="{% url 'gestion:compra_crear' %}"><h3>Registrar compra</h3><p>Ingresar productos al inventario.</p></a>
     <a class="card" href="{% url 'gestion:catalogo' 'proveedores' %}"><h3>Proveedores</h3><p>Administrar contactos.</p></a>
     <a class="card" href="{% url 'gestion:reportes' %}"><h3>Reportes</h3><p>Compras por proveedor y productos más vendidos.</p></a>

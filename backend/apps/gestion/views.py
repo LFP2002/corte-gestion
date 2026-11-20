@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 
 from .forms import CompraForm, LineasFormSet, PeriodoForm, ProductoForm, ProveedorForm, VentaForm
 from .models import Compra, MovimientoStock, Producto, Proveedor, Venta
+from .filters import CompraFiltro, NombreEstadoFiltro, ProductoFiltro, VentaFiltro
 from .services import registrar_compra, registrar_venta, validar_usuario
 from .reports import compras_por_proveedor, limites_periodo, productos_mas_vendidos
 from django.utils import timezone
@@ -25,11 +26,10 @@ CATALOGOS = {
 def catalogo(request, tipo):
     validar_usuario(request.user, solo_dueno=tipo == 'proveedores')
     modelo, _, titulo = CATALOGOS[tipo]
-    objetos = modelo.objects.all()
-    if request.GET.get('q'):
-        objetos = objetos.filter(nombre__icontains=request.GET['q'])
+    filtro = (ProductoFiltro if tipo == 'productos' else NombreEstadoFiltro)(request.GET)
+    objetos = filtro.filtrar(modelo.objects.all())
     pagina = Paginator(objetos, 30).get_page(request.GET.get('page'))
-    return render(request, 'gestion/catalogo.html', {'objetos': pagina, 'tipo': tipo, 'titulo': titulo})
+    return render(request, 'gestion/catalogo.html', {'objetos': pagina, 'tipo': tipo, 'titulo': titulo, 'filtro_form': filtro})
 
 
 @login_required
@@ -75,8 +75,10 @@ def catalogo_eliminar(request, tipo, pk):
 @login_required
 def compras(request):
     validar_usuario(request.user, solo_dueno=True)
-    pagina = Paginator(Compra.objects.select_related('proveedor', 'usuario'), 30).get_page(request.GET.get('page'))
-    return render(request, 'gestion/operaciones.html', {'objetos': pagina, 'tipo': 'compra'})
+    filtro = CompraFiltro(request.GET)
+    objetos = filtro.filtrar(Compra.objects.select_related('proveedor', 'usuario'))
+    pagina = Paginator(objetos, 30).get_page(request.GET.get('page'))
+    return render(request, 'gestion/operaciones.html', {'objetos': pagina, 'tipo': 'compra', 'filtro_form': filtro})
 
 
 @login_required
@@ -107,12 +109,12 @@ def compra_detalle(request, pk):
 @login_required
 def stock(request):
     validar_usuario(request.user)
-    productos = Producto.objects.all()
-    if request.GET.get('q'):
-        productos = productos.filter(nombre__icontains=request.GET['q'])
+    filtro = ProductoFiltro(request.GET)
+    productos = filtro.filtrar(Producto.objects.all())
     movimientos = MovimientoStock.objects.select_related('producto', 'usuario')[:50] if request.user.es_dueno else []
     return render(request, 'gestion/stock.html', {
         'productos': Paginator(productos, 30).get_page(request.GET.get('page')), 'movimientos': movimientos,
+        'filtro_form': filtro,
     })
 
 
@@ -121,9 +123,10 @@ def ventas(request):
     validar_usuario(request.user)
     # El historial es de consulta para cualquier usuario activo autorizado;
     # conservar el vendedor visible permite trazabilidad de cada operación.
-    objetos = Venta.objects.select_related('usuario')
+    filtro = VentaFiltro(request.GET)
+    objetos = filtro.filtrar(Venta.objects.select_related('usuario'))
     pagina = Paginator(objetos, 30).get_page(request.GET.get('page'))
-    return render(request, 'gestion/operaciones.html', {'objetos': pagina, 'tipo': 'venta'})
+    return render(request, 'gestion/operaciones.html', {'objetos': pagina, 'tipo': 'venta', 'filtro_form': filtro})
 
 
 @login_required
