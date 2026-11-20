@@ -1,13 +1,70 @@
 {% extends 'base.html' %}
+{% block titulo %}Registrar {{ tipo }}{% endblock %}
 {% block contenido %}
-<h1>Registrar {{ tipo }}</h1><p>Una confirmación guarda la operación y actualiza las existencias. Cantidades en kg admiten coma decimal.</p>
-<form method="post" class="card" id="operacion">{% csrf_token %}{{ form.as_p }}
-{{ lineas.management_form }}{{ lineas.non_form_errors }}
-<div id="lineas">{% for linea in lineas %}<div class="fila detalle">{{ linea.as_p }}</div>{% endfor %}</div>
-<template id="linea-vacia"><div class="fila detalle">{{ lineas.empty_form.as_p }}</div></template>
-<button type="button" class="btn sec" id="agregar">+ Agregar producto</button>
-<p>Marque «Eliminar» para omitir una línea. Los totales se calculan al confirmar.</p>
-<button class="btn" type="submit">Confirmar {{ tipo }}</button></form>
-{% if tipo == 'venta' %}<select id="precios" hidden aria-hidden="true">{% for p in lineas.productos %}<option value="{{ p.pk }}" data-precio="{{ p.precio_venta|stringformat:'.2f' }}">{{ p.nombre }}</option>{% endfor %}</select>{% endif %}
+<h1>Registrar {{ tipo }}</h1>
+<form method="post" class="card formulario-operacion" id="operacion" novalidate>
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="datos-operacion">
+    {% for campo in form %}
+    <div class="campo">
+      {{ campo.label_tag }}{{ campo }}{{ campo.errors }}
+      {% if campo.help_text %}<small>{{ campo.help_text }}</small>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {{ lineas.management_form }}
+  {{ lineas.non_form_errors }}
+  <div id="lineas">
+    {% for linea in lineas %}
+    <section class="detalle-producto" data-linea{% if linea.DELETE.value %} hidden{% endif %}>
+      <div class="detalle-encabezado">
+        <h2 class="detalle-nombre">Producto {{ forloop.counter }}</h2>
+        <button type="button" class="btn sec mini" data-quitar hidden>Quitar producto</button>
+      </div>
+      {{ linea.non_field_errors }}
+      {% for oculto in linea.hidden_fields %}{{ oculto }}{% endfor %}
+      {{ linea.DELETE.as_hidden }}
+      <div class="detalle-campos">
+        <div class="campo">{{ linea.producto.label_tag }}{{ linea.producto }}{{ linea.producto.errors }}</div>
+        <div class="campo">{{ linea.cantidad.label_tag }}{{ linea.cantidad }}{{ linea.cantidad.errors }}</div>
+        <div class="campo">{{ linea.precio_unitario.label_tag }}{{ linea.precio_unitario }}{{ linea.precio_unitario.errors }}</div>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+  <template id="linea-vacia">
+    <section class="detalle-producto" data-linea>
+      <div class="detalle-encabezado">
+        <h2 class="detalle-nombre">Producto</h2>
+        <button type="button" class="btn sec mini" data-quitar hidden>Quitar producto</button>
+      </div>
+      {{ lineas.empty_form.non_field_errors }}
+      {% for oculto in lineas.empty_form.hidden_fields %}{{ oculto }}{% endfor %}
+      {{ lineas.empty_form.DELETE.as_hidden }}
+      <div class="detalle-campos">
+        <div class="campo">{{ lineas.empty_form.producto.label_tag }}{{ lineas.empty_form.producto }}{{ lineas.empty_form.producto.errors }}</div>
+        <div class="campo">{{ lineas.empty_form.cantidad.label_tag }}{{ lineas.empty_form.cantidad }}{{ lineas.empty_form.cantidad.errors }}</div>
+        <div class="campo">{{ lineas.empty_form.precio_unitario.label_tag }}{{ lineas.empty_form.precio_unitario }}{{ lineas.empty_form.precio_unitario.errors }}</div>
+      </div>
+    </section>
+  </template>
+  <button type="button" class="btn sec" id="agregar">+ Agregar otro producto</button>
+  <div class="acciones-formulario">
+    <button class="btn" type="submit">Confirmar {{ tipo }}</button>
+    {% if tipo == 'compra' %}
+      <a class="btn sec" href="{% url 'gestion:compras' %}">Cancelar</a>
+    {% else %}
+      <a class="btn sec" href="{% url 'gestion:ventas' %}">Cancelar</a>
+    {% endif %}
+  </div>
+</form>
+{% if tipo == 'venta' %}
+<select id="precios" hidden aria-hidden="true">
+  {% for p in lineas.productos %}
+    <option value="{{ p.pk }}" data-precio="{{ p.precio_venta|stringformat:'.2f' }}">{{ p.nombre }}</option>
+  {% endfor %}
+</select>
+{% endif %}
 {% load static %}<script src="{% static 'js/operacion.js' %}" defer></script>
 {% endblock %}
