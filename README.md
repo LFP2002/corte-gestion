@@ -131,12 +131,12 @@ docker compose exec web python manage.py migrate --noinput
 docker compose exec web python manage.py makemigrations --check --dry-run
 ```
 
-Se conserva intacta `usuarios/migrations/0001_initial.py`; `gestion` tiene migraciones
+Se conserva intacta `backend/apps/usuarios/migrations/0001_initial.py`; `gestion` tiene migraciones
 aditivas para compras y ventas. Para nuevos cambios de modelos, generar migraciones
 con el código local montado (Windows):
 
 ```powershell
-docker compose run --rm --no-deps -v "${PWD}:/app" web python manage.py makemigrations
+docker compose run --rm --no-deps -v "${PWD}/backend:/app" web python manage.py makemigrations
 docker compose up -d --build --wait
 ```
 
@@ -159,7 +159,7 @@ docker compose cp scripts/pruebas_mariadb.sh db:/tmp/pruebas_mariadb.sh
 docker compose exec db sh /tmp/pruebas_mariadb.sh
 docker compose exec web python manage.py test --verbosity 2
 # Pruebas de código local aún no copiado a la imagen:
-docker compose run --rm --no-deps -v "${PWD}:/app" web python manage.py test --verbosity 2
+docker compose run --rm --no-deps -v "${PWD}/backend:/app" web python manage.py test --verbosity 2
 ```
 
 No usar una base `test_carniceria` con información valiosa. Si cambia DB_NAME, el
@@ -168,9 +168,9 @@ script concede permisos sobre `test_<DB_NAME>`. No concede privilegios globales.
 La suite incluye login, registro cerrado, roles, CSRF, CRUD, totales, coma decimal,
 compras/ventas, rollback, historial protegido, reportes con límites calendario,
 persistencia tras nuevas consultas y dos ventas concurrentes con conexiones reales.
-`gestion.tests.test_rendimiento` mide POSTs de 1, 5 y 20 líneas (5 repeticiones por operación).
+`apps.gestion.tests.test_rendimiento` mide POSTs de 1, 5 y 20 líneas (5 repeticiones por operación).
 **Eso no valida RNF2**: falta medir tiempos de digitación y probar con el personal
-del negocio, navegador real y carga representativa. Véase `docs/VERIFICACION.md`.
+del negocio, navegador real y carga representativa. Véase `backend/docs/VERIFICACION.md`.
 
 ## Detener y reiniciar sin perder datos
 
@@ -197,24 +197,25 @@ de una antigua instalación XAMPP. Respaldarla por separado antes de cualquier m
 
 ## Arquitectura y alcance
 
-- `usuarios`: modelo personalizado preservado, autenticación, roles y administración de cuentas.
-- `gestion/models.py`: esquema relacional y restricciones de integridad.
-- `gestion/services.py`: transacciones atómicas, bloqueo de productos en orden de PK,
+- `backend/apps/usuarios/`: modelo personalizado preservado, autenticación, roles y administración de cuentas.
+- `backend/apps/gestion/models.py`: esquema relacional y restricciones de integridad.
+- `backend/apps/gestion/services.py`: transacciones atómicas, bloqueo de productos en orden de PK,
   validación de datos, cálculo de importes y movimientos explícitos, sin señales.
-- `gestion/forms.py` / `views.py`: entrada validada y permisos; los templates no actualizan stock.
-- `gestion/reports.py`: agregaciones SQL y períodos calendario; listados paginados,
+- `backend/apps/gestion/forms.py` / `views.py`: entrada validada y permisos; los templates no actualizan stock.
+- `backend/apps/gestion/reports.py`: agregaciones SQL y períodos calendario; listados paginados,
   detalles con `select_related` / `prefetch_related`, opciones de productos reutilizadas.
-- `templates/`: plantillas compartidas; `gestion/templates/gestion/` y
-  `usuarios/templates/usuarios/`: plantillas específicas de cada app.
-- `static/css/style.css` y `gestion/static/gestion/js/operacion.js`: identidad visual
+- `backend/config/`: configuración Django; `backend/manage.py`: entrada de comandos local.
+- `backend/templates/`: todas las plantillas propias, compartidas y por dominio.
+- `backend/static/css/style.css` y `backend/static/js/operacion.js`: identidad visual
   burdeos/crema conservada y JavaScript pequeño sin framework adicional.
-- `gestion/tests/` y `usuarios/tests/`: pruebas organizadas por responsabilidad.
-  Estructura y ubicación de futuras pruebas: `docs/ESTRUCTURA_PROYECTO.md`.
+- `backend/apps/gestion/tests/` y `backend/apps/usuarios/tests/`: pruebas por responsabilidad.
+  Estructura y ubicación de futuras pruebas: `backend/docs/ESTRUCTURA_PROYECTO.md`.
 
-Modelo y decisiones: `docs/ARQUITECTURA.md`. Auditoría inicial: `docs/AUDITORIA.md`.
-Evidencia y limitaciones de verificación: `docs/VERIFICACION.md`.
+Modelo y decisiones: `backend/docs/ARQUITECTURA.md`. Auditoría inicial: `backend/docs/AUDITORIA.md`.
+Evidencia del refactor: `backend/docs/REFACTORIZACION_FYAG.md`.
+Verificación histórica: `backend/docs/VERIFICACION.md`.
 Cambio de identidad y respaldo histórico verificado:
-`docs/CAMBIO_IDENTIDAD.md`.
+`backend/docs/CAMBIO_IDENTIDAD.md`.
 
 Es un entorno académico de **desarrollo local**, no un despliegue público. `runserver`,
 DEBUG y phpMyAdmin no son adecuados para Internet; con DEBUG=False hace falta además
@@ -226,7 +227,7 @@ No conceder esos privilegios para uso cotidiano.
 
 ## Integración continua en GitHub
 
-El flujo `.github/workflows/ci.yml` se ejecuta en pushes a `main`, pull requests
+El flujo `.github/workflows/ci.yml` se ejecuta en pushes a `main` y `refactor/estructura-fyag`, pull requests
 hacia `main` y manualmente desde Actions. En un runner Linux desechable crea un
 `.env` temporal con secretos aleatorios, un volumen de MariaDB exclusivo de ese
 runner, construye los tres servicios, verifica Django/migraciones y ejecuta la
@@ -244,7 +245,7 @@ la revisión visual ni la validación de RNF2 con usuarios.
   de todos los usuarios para facilitar la atención y trazabilidad.
   Las métricas son consultas de lectura y no cambian el inventario.
 - Precios e importes se muestran con el filtro de plantillas `clp`
-  (`gestion/templatetags/moneda.py`): `$60.000` si no hay centavos;
+  (`backend/apps/gestion/templatetags/moneda.py`): `$60.000` si no hay centavos;
   `$1.234,50` si el valor registrado tiene fracción. El Decimal almacenado
   conserva toda su precisión y los formularios de registro no cambian.
 - Catálogo e inventario distinguen «Agotado», «Activo/Disponible» e «Inactivo»;
