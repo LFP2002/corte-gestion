@@ -151,11 +151,22 @@ edición, eliminación, devoluciones ni anulaciones en este MVP. No hay facturac
 electrónica; la compra admite referencia libre del documento. Revise antes de confirmar
 y no repita el envío si la conexión se interrumpe: consulte primero el historial.
 
-Los formularios admiten varios productos con **Agregar producto** y permiten omitir
-líneas marcando **Eliminar**. Cantidades en kg admiten `2,5` o `2.5`, hasta 3 decimales.
-Precios hasta 2 decimales, por kg/unidad; las ventas precargan el precio del catálogo,
-editable antes de confirmar. No se aplica IVA ni se representa utilidad contable.
-Una misma línea no puede repetirse: agrupe la cantidad por producto.
+Las compras y ventas muestran inicialmente **un producto**. Para registrar más,
+use **Agregar otro producto**; para retirar una línea adicional, **Quitar producto**.
+No hay casillas de eliminación visibles y siempre debe quedar al menos una línea.
+**Cancelar** vuelve al historial correspondiente sin confirmar la operación.
+Cantidades en kg admiten `2,5` o `2.5`, hasta 3 decimales. Precios hasta 2
+decimales, por kg/unidad; las ventas precargan el precio del catálogo, editable antes
+de confirmar. No se aplica IVA ni se representa utilidad contable. Una misma línea
+no puede repetirse: agrupe la cantidad por producto.
+
+Los formularios de productos y proveedores disponen también de botón **Cancelar**,
+que vuelve al listado sin guardar. En **Reportes** los controles del período quedan
+alineados y **Compras por proveedor** muestra total comprado, cantidad de compras,
+última compra y el producto más comprado **por importe acumulado** (no por cantidad,
+porque se admiten unidades y kg). Los proveedores sin compras en ese período siguen
+visibles con cifras en cero y datos complementarios vacíos. Ninguna de estas mejoras
+modifica los permisos, la lógica transaccional o el esquema de MariaDB.
 
 ## Demostración obligatoria
 
