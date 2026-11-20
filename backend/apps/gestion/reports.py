@@ -1,10 +1,10 @@
 """Consultas agregadas por períodos calendario, sin cargar detalles en Python."""
 from datetime import timedelta
 
-from django.db.models import DecimalField, Q, Sum, Value
+from django.db.models import Count, DecimalField, Max, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 
-from .models import DetalleVenta, Proveedor
+from .models import DetalleCompra, DetalleVenta, Proveedor
 
 
 def limites_periodo(fecha, periodo):
@@ -17,10 +17,25 @@ def limites_periodo(fecha, periodo):
 
 
 def compras_por_proveedor(inicio, fin):
-    return Proveedor.objects.annotate(total_comprado=Coalesce(
-        Sum('compras__total', filter=Q(compras__fecha__gte=inicio, compras__fecha__lt=fin)),
-        Value(0), output_field=DecimalField(max_digits=16, decimal_places=2),
-    )).order_by('-total_comprado', 'nombre')
+    periodo = Q(compras__fecha__gte=inicio, compras__fecha__lt=fin)
+    # Comparar importes permite ordenar productos de distintas unidades (kg/unidad)
+    # sin mezclar cantidades incompatibles. Desempate estable por nombre y PK.
+    principal = (DetalleCompra.objects.filter(
+        compra__proveedor_id=OuterRef('pk'),
+        compra__fecha__gte=inicio, compra__fecha__lt=fin,
+    ).order_by().values('producto_id', 'producto__nombre')
+        .annotate(importe=Sum('subtotal'))
+        .order_by('-importe', 'producto__nombre', 'producto_id')
+        .values('producto__nombre')[:1])
+    return Proveedor.objects.annotate(
+        total_comprado=Coalesce(
+            Sum('compras__total', filter=periodo),
+            Value(0), output_field=DecimalField(max_digits=16, decimal_places=2),
+        ),
+        cantidad_compras=Count('compras', filter=periodo),
+        ultima_compra=Max('compras__fecha', filter=periodo),
+        producto_destacado=Subquery(principal),
+    ).order_by('-total_comprado', 'nombre')
 
 
 def productos_mas_vendidos(inicio, fin):
