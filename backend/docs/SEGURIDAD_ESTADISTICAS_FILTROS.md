@@ -351,10 +351,16 @@ nuevo contrato; **no** realiza un backfill de datos reales. Los registros antigu
 se prueban por separado sin snapshot. La prueba estructural solo incorpora la nueva
 migración al conjunto esperado; no se elimina ningún test para ocultar fallos.
 
-GitHub Actions del cierre debe verificarse sobre el último commit publicado; los
-enlaces de la sección histórica corresponden a la entrega anterior. El resultado
-actual y sus enlaces se registrarán en el comentario final de la PR #4. Mantener
-la PR en borrador, sin Ready for Review ni merge automático.
+GitHub Actions del cierre **aprobado** sobre `eeeeb3d`, con checkout limpio,
+construcción Docker, MariaDB, suite completa y Windows:
+- Push: https://github.com/LFP2002/corte-gestion/actions/runs/44654872067
+  (Linux 2 min 30 s, Windows 11 s).
+- PR: https://github.com/LFP2002/corte-gestion/actions/runs/44654878837
+  (Linux 2 min 3 s, Windows 11 s).
+Los enlaces de la sección histórica corresponden a la entrega anterior. Los checks
+de la PR y el comentario final de entrega muestran los resultados del último commit,
+incluidos cambios únicamente documentales. La PR se mantiene en borrador, sin Ready
+for Review ni merge automático.
 
 ## Actualización y operación desde la raíz
 
