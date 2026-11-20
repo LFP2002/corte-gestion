@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone as dt_timezone
 from io import StringIO
+import os
 from itertools import product
 from threading import Barrier
 from unittest.mock import patch
@@ -122,6 +123,31 @@ class CredencialesTests(TestCase):
         respuesta = self.client.post('/admin/usuarios/usuario/add/', {**datos, 'password1': CLAVE, 'password2': CLAVE})
         self.assertEqual(respuesta.status_code, 302)
         self.assertTrue(Usuario.objects.get(username='nuevo').check_password(CLAVE))
+
+    def test_createsuperuser_interactivo_no_admite_omitir_validacion(self):
+        with patch('apps.usuarios.management.commands.createsuperuser.getpass', return_value='sin-mayuscula-573!'):
+            with self.assertRaisesMessage(CommandError, 'mayúscula'):
+                call_command('createsuperuser', username='admin', email='admin@example.test', stdout=StringIO())
+        self.assertFalse(Usuario.objects.exists())
+
+    def test_createsuperuser_entorno_rechaza_debil(self):
+        with patch.dict(os.environ, {'DJANGO_SUPERUSER_PASSWORD': 'sin-mayuscula-573!'}):
+            with self.assertRaisesMessage(CommandError, 'mayúscula'):
+                call_command('createsuperuser', username='admin', email='admin@example.test', interactive=False, stdout=StringIO())
+        self.assertFalse(Usuario.objects.exists())
+
+    def test_createsuperuser_entorno_fuerte_y_rol_administrativo(self):
+        with patch.dict(os.environ, {'DJANGO_SUPERUSER_PASSWORD': CLAVE}):
+            call_command('createsuperuser', username='admin', email='admin@example.test', interactive=False, stdout=StringIO())
+        usuario = Usuario.objects.get(username='admin')
+        self.assertTrue(usuario.check_password(CLAVE))
+        self.assertTrue(usuario.es_dueno and usuario.is_staff and usuario.is_superuser)
+
+    def test_createsuperuser_sin_password_no_crea_credencial_utilizable(self):
+        with patch.dict(os.environ):
+            os.environ.pop('DJANGO_SUPERUSER_PASSWORD', None)
+            call_command('createsuperuser', username='admin', email='admin@example.test', interactive=False, stdout=StringIO())
+        self.assertFalse(Usuario.objects.get(username='admin').has_usable_password())
 
 
 class BloqueoTests(TestCase):

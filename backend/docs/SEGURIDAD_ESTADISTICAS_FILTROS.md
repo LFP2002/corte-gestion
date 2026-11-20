@@ -35,12 +35,21 @@ Flujos de la aplicación: UserCreationForm, edición con validate_password,
 El admin conserva UserAdmin; su alta ahora expone correo y rol de forma explícita.
 No se guarda texto plano ni se altera el algoritmo de hash del framework.
 
+Se extiende además el comando `createsuperuser` de Django: se heredan argumentos
+estándar, se valida antes de llamar al manager original y se elimina la posibilidad
+de omitir validadores tanto en modo interactivo como con DJANGO_SUPERUSER_PASSWORD.
+Un superusuario nuevo recibe rol dueño para cumplir la restricción de acceso al admin;
+no se promueven cuentas existentes. `--noinput` sin contraseña conserva la semántica
+Django de contraseña inutilizable. No se incluye ningún secreto en mensajes.
+`usuarios` se registra antes de `django.contrib.auth` para que Django descubra el
+comando reforzado con prioridad; las etiquetas, backend y migraciones no cambian.
+
 Las APIs de programación `create_user`, `set_password` y `authenticate` son APIs
 confiables de Django, no endpoints públicos: no validan política ni contabilizan
 intentos por sí mismas. Código futuro que acepte entradas debe usar los formularios
 de la aplicación/validate_password, nunca una llamada directa como sustituto.
-Herramientas privilegiadas del framework que admiten omitir validación no deben
-usarse para altas operativas; el flujo soportado para el primer dueño es `crear_dueno`.
+Los comandos de contraseña soportados validan la política; para el primer dueño
+operativo se recomienda `crear_dueno`, sin privilegios staff/superusuario.
 
 ### Bloqueo persistente y recuperación
 
@@ -191,8 +200,17 @@ emergencia del README. La expiración no necesita cron: se evalúa en cada nuevo
 - Baseline 55/55; intermedio 77/77 con seguridad; ranking/filtros específicos 19/19.
 - Suite ampliada **96/96, 22,825 s**, imagen reconstruida contra MariaDB real.
 - Tras reforzar rutas del admin: **25/25 pruebas específicas de seguridad, 15,393 s**.
-- Suite final sobre imagen reconstruida, sin montaje: **99/99, 25,525 s**:
+- Suite antes de la revisión adicional del CLI, imagen reconstruida sin montaje: **99/99, 25,525 s**:
   55 escenarios anteriores + 44 nuevos, sin omisiones.
+- Revisión adicional del CLI: se detectó el bypass estándar de createsuperuser.
+  La primera prueba reveló que auth tenía prioridad de descubrimiento del comando;
+  se corrigió el orden de registro y las **10 pruebas de credenciales** pasaron.
+  Cuatro casos nuevos cubren bypass interactivo, entorno débil/fuerte y contraseña
+  inutilizable. Los resultados finales de la suite ampliada se registran en la PR.
+- **Suite final: 103/103 pruebas en 25,791 s**, imagen reconstruida sin montaje:
+  55 anteriores + 48 nuevas. Check, migraciones sin cambios/pendientes y comparación
+  de todos los datos originales repetidos con éxito. Se comprobó explícitamente
+  que el registro de comandos descubre `apps.usuarios.management.commands.createsuperuser`.
 - Compose config/build/up correctos; check sin problemas, makemigrations sin cambios,
   migrate --check sin pendientes. Instalador Windows: 3 escenarios aprobados;
   prueba estructural PowerShell aprobada.
@@ -298,6 +316,7 @@ backend/
       + validators.py
       ~ views.py
       management/commands/+ desbloquear_usuario.py
+      management/commands/+ createsuperuser.py
       migrations/+ 0002_bloqueo_acceso.py
       tests/+ test_seguridad_cuentas.py
   config/~ settings.py

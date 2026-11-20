@@ -78,6 +78,11 @@ número y símbolo; un espacio no cuenta como símbolo. Se mantienen los validad
 Django existentes. Las cuentas y contraseñas anteriores siguen funcionando sin
 restablecimiento obligatorio. La política se aplica a alta/edición de cuentas,
 formularios del admin Django, `crear_dueno`, su alias y `changepassword`.
+También se endurece `createsuperuser`: sin opción de omitir validación, incluso
+con contraseña de entorno en modo no interactivo. Este comando privilegiado crea
+un dueño staff/superusuario; para el uso cotidiano se mantiene `crear_dueno` sin
+privilegios de admin Django. Sin contraseña de entorno, `--noinput` crea una cuenta
+sin contraseña utilizable, no una credencial débil.
 
 Tres credenciales incorrectas bloquean nuevos logins durante **15 minutos**.
 El login público no revela si la cuenta existe, está desactivada o bloqueada.
