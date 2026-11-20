@@ -12,13 +12,7 @@
     {% endif %}
   {% endif %}
 </div>
-<form method="get" class="search-form" role="search">
-  <div class="campo-busqueda">
-    <label for="buscar-catalogo">Buscar por nombre</label>
-    <input id="buscar-catalogo" name="q" type="search" value="{{ request.GET.q }}">
-  </div>
-  <button class="btn" type="submit">Buscar</button>
-</form>
+{% include 'gestion/filtros.html' %}
 <div class="card tabla-scroll">
   <table>
     <thead>

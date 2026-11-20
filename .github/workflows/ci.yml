@@ -2,7 +2,7 @@ name: Pruebas Django y MariaDB
 
 on:
   push:
-    branches: [main, refactor/estructura-fyag]
+    branches: [main, refactor/estructura-fyag, feat/seguridad-usuarios-filtros-estadisticas]
   pull_request:
     branches: [main]
   workflow_dispatch:

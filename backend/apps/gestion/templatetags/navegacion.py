@@ -17,7 +17,7 @@ def seccion_actual(context):
         return ''
 
     vista = resolver.view_name
-    if vista == 'inicio':
+    if vista in {'inicio', 'empleado_mes'}:
         return 'inicio'
     if vista in {
         'gestion:catalogo',

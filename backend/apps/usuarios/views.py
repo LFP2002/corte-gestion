@@ -9,12 +9,16 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from apps.gestion.models import Producto, Venta
+from apps.gestion.statistics import MesForm, mes_actual, ranking_empleados
 from django.db.models.deletion import ProtectedError
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
+from django.views import View
+from django.shortcuts import get_object_or_404
 
 from .forms import UsuarioCrearForm, UsuarioEditarForm
 from .models import Usuario
+from .filters import UsuarioFiltro
 
 
 class SoloDueno(LoginRequiredMixin, UserPassesTestMixin):
@@ -58,6 +62,16 @@ class UsuarioLista(SoloDueno, ListView):
     template_name = 'usuarios/lista.html'
     context_object_name = 'usuarios'
     ordering = ['id']
+    paginate_by = 30
+
+    def get_queryset(self):
+        self.filtro_form = UsuarioFiltro(self.request.GET)
+        return self.filtro_form.filtrar(super().get_queryset())
+
+    def get_context_data(self, **kwargs):
+        contexto = super().get_context_data(**kwargs)
+        contexto['filtro_form'] = self.filtro_form
+        return contexto
 
 
 class UsuarioCrear(SoloDueno, CreateView):
@@ -87,6 +101,10 @@ class UsuarioEditar(SoloDueno, UpdateView):
                     and sum(u.es_dueno and u.is_active for u in usuarios) <= 1):
                 form.add_error('rol', 'Debe quedar al menos un dueño activo.')
                 return self.form_invalid(form)
+            # El formulario se cargó antes del bloqueo; no sobrescribir intentos
+            # concurrentes con los valores antiguos de su instancia.
+            form.instance.intentos_fallidos = anterior.intentos_fallidos
+            form.instance.bloqueo_hasta = anterior.bloqueo_hasta
             messages.success(self.request, 'Usuario actualizado.')
             return super().form_valid(form)
 
@@ -111,3 +129,29 @@ class UsuarioEliminar(SoloDueno, DeleteView):
                 except ProtectedError:
                     messages.error(request, 'Usuario con operaciones históricas: no se puede eliminar. Desactive su cuenta al editar.')
         return redirect(self.success_url)
+
+
+class UsuarioDesbloquear(SoloDueno, View):
+    def post(self, request, pk):
+        with transaction.atomic():
+            usuario = get_object_or_404(Usuario.objects.select_for_update(), pk=pk)
+            usuario.intentos_fallidos = 0
+            usuario.bloqueo_hasta = None
+            usuario.save(update_fields=['intentos_fallidos', 'bloqueo_hasta'])
+        messages.success(request, 'Bloqueo temporal restablecido. El estado administrativo no cambió.')
+        return redirect('usuario_lista')
+
+
+class EmpleadoMes(SoloDueno, TemplateView):
+    template_name = 'usuarios/empleado_mes.html'
+
+    def get_context_data(self, **kwargs):
+        contexto = super().get_context_data(**kwargs)
+        form = MesForm(self.request.GET if self.request.GET else {'mes': mes_actual().strftime('%Y-%m')})
+        contexto['mes_form'] = form
+        if form.is_valid():
+            mes = form.cleaned_data['mes']
+            ranking = list(ranking_empleados(mes)[:3])
+            contexto.update(mes_evaluado=mes, ranking=ranking,
+                            destacado=ranking[0] if ranking else None)
+        return contexto

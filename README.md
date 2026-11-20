@@ -71,6 +71,49 @@ La primera descarga/compilación puede tardar varios minutos. No se ejecutan
 
 ## Uso y roles
 
+### Seguridad de cuentas
+
+Las contraseñas **nuevas** requieren al menos 8 caracteres, mayúscula, minúscula,
+número y símbolo; un espacio no cuenta como símbolo. Se mantienen los validadores
+Django existentes. Las cuentas y contraseñas anteriores siguen funcionando sin
+restablecimiento obligatorio. La política se aplica a alta/edición de cuentas,
+formularios del admin Django, `crear_dueno`, su alias y `changepassword`.
+
+Tres credenciales incorrectas bloquean nuevos logins durante **15 minutos**.
+El login público no revela si la cuenta existe, está desactivada o bloqueada.
+Un acceso correcto antes del tercer fallo reinicia el contador. El bloqueo no cambia
+`is_active`, roles ni sesiones ya establecidas. Usuarios muestra el vencimiento;
+solo el dueño puede usar **Desbloquear cuenta** (POST con CSRF). Cambiar una contraseña
+no desbloquea automáticamente una cuenta.
+
+Si el único dueño queda bloqueado y no conserva una sesión, el operador con acceso
+autorizado al equipo puede recuperar **solo** el bloqueo temporal:
+
+```powershell
+docker compose exec web python manage.py desbloquear_usuario NOMBRE_USUARIO
+```
+
+No activa cuentas desactivadas ni cambia contraseñas/roles. No exponga este comando
+como endpoint web. Un despliegue público necesita además limitación de peticiones
+en su perímetro; el bloqueo por cuenta no impide ataques distribuidos de denegación.
+
+### Empleado del mes y filtros
+
+El dueño accede desde Inicio → **Empleado del mes**. Ranking por **monto total de
+ventas registradas**, no utilidad ni cantidad de productos. Desempates: cantidad
+de ventas descendente y luego ID de usuario ascendente. Excluye dueños, incluye
+empleados actualmente inactivos con etiqueta histórica y permite consultar meses
+anteriores. Usa fecha comercial y mes calendario de `America/Santiago`.
+El empleado conserva indicadores personales e historial global, pero no el ranking.
+
+Productos, proveedores, ventas, compras, inventario y usuarios tienen un panel
+**Filtros** nativo, cerrado inicialmente. Abrir/cerrar no recarga la página; aplicar
+usa GET, conserva selecciones y paginación, y muestra un indicador aunque se cierre.
+Los parámetros inválidos muestran errores y no amplían silenciosamente resultados.
+
+Detalle técnico, migración aditiva, parámetros GET, pruebas y límites:
+[`backend/docs/SEGURIDAD_ESTADISTICAS_FILTROS.md`](backend/docs/SEGURIDAD_ESTADISTICAS_FILTROS.md).
+
 | Operación | Dueño | Empleado |
 |---|---|---|
 | Consultar productos, precios y stock | Sí | Sí |

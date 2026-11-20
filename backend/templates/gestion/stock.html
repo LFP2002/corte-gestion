@@ -2,13 +2,8 @@
 {% block titulo %}Inventario{% endblock %}
 {% block contenido %}
 <h1>Inventario</h1>
-<form method="get" class="search-form" role="search">
-  <div class="campo-busqueda">
-    <label for="buscar-stock">Buscar producto</label>
-    <input id="buscar-stock" name="q" type="search" value="{{ request.GET.q }}">
-  </div>
-  <button class="btn" type="submit">Buscar</button>
-</form>
+{% include 'gestion/filtros.html' %}
+<p>Los filtros se aplican a las existencias; los últimos movimientos conservan su historial global.</p>
 <div class="card tabla-scroll">
   <table>
     <thead><tr><th scope="col">Producto</th><th scope="col" class="num">Existencias</th><th scope="col">Estado</th></tr></thead>

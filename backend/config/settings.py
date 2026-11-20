@@ -102,6 +102,9 @@ LOGOUT_REDIRECT_URL = 'login'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
+        "NAME": "apps.usuarios.validators.PoliticaPasswordValidator",
+    },
+    {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
