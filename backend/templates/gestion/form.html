@@ -1,2 +1,11 @@
 {% extends 'base.html' %}
-{% block contenido %}<h1>{{ titulo }}</h1><form method="post" class="card">{% csrf_token %}{{ form.as_p }}<button class="btn">Guardar</button> <a href="{% url 'gestion:catalogo' tipo %}">Cancelar</a></form>{% endblock %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<h1>{{ titulo }}</h1>
+<form method="post" class="card">{% csrf_token %}{{ form.as_p }}
+  <div class="acciones-formulario">
+    <button class="btn" type="submit">Guardar</button>
+    <a class="btn sec" href="{% url 'gestion:catalogo' tipo %}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

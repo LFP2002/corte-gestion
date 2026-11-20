@@ -84,7 +84,7 @@ class LineasBase(BaseFormSet):
             raise forms.ValidationError('No repita productos: use una sola línea por producto.')
 
 
-LineasFormSet = formset_factory(LineaForm, formset=LineasBase, extra=1, min_num=1,
+LineasFormSet = formset_factory(LineaForm, formset=LineasBase, extra=0, min_num=1,
                                validate_min=True, max_num=100, validate_max=True,
                                absolute_max=100, can_delete=True)
 
